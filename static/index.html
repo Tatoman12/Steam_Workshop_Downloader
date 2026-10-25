@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Steam Workshop Downloader</title>
+<!-- Favicon de Steam SVG -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f2e8d8'%3E%3Cpath d='M11.98 2a10 10 0 0 0-9.96 9.1l5.35 2.22a2.83 2.83 0 0 1 1.6-.49h.15l2.38-3.45v-.05a3.78 3.78 0 1 1 3.78 3.78h-.09l-3.4 2.43v.12a2.84 2.84 0 0 1-5.63.57L2.2 14.6A10 10 0 1 0 11.98 2Zm-4.22 15.2-1.2-.5a2.13 2.13 0 0 0 3.9-.9 2.13 2.13 0 0 0-2.9-1.97l1.24.52a1.57 1.57 0 1 1-1.24 2.87l.2-.02Zm10.1-7.6a2.52 2.52 0 1 1-5.04 0 2.52 2.52 0 0 1 5.04 0Zm-4.4 0a1.89 1.89 0 1 0 3.78 0 1.89 1.89 0 0 0-3.78 0Z'/%3E%3C/svg%3E">
+<script>
+  // Anti-flash: aplica el tema ANTES de que se pinte el CSS
+  (() => {
+    try {
+      const saved = localStorage.getItem("theme");
+      if (saved === "light" || saved === "dark") {
+        document.documentElement.dataset.theme = saved;
+        return;
+      }
+    } catch {}
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.theme = prefersDark ? "dark" : "light";
+  })();
+</script>
+<style>
+  :root {
+    /* ---- LIGHT (default) ---- */
+    --bg: #f2ebe0;
+    --bg-2: #ece3d5;
+    --paper: #fdfbf6;
+    --paper-2: #f7f0e4;
+    --ink: #1a1410;
+    --ink-2: #3d332b;
+    --muted: #7a6f63;
+    --muted-2: #a89c8e;
+    --rule: #e8decd;
+    --rule-2: #d4c7b4;
+    --accent: #b8421d;
+    --accent-2: #8f3315;
+    --accent-soft: #fbe9e0;
+    --ok: #4a6b1a;
+    --ok-soft: #ecf3dc;
+    --err: #8f2e24;
+    --err-soft: #f8e3df;
+    --primary-hover: #000000;
+    --body-bg:
+      radial-gradient(ellipse 1000px 500px at 50% -10%, rgba(184, 66, 29, 0.04), transparent 60%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.34  0 0 0 0 0.28  0 0 0 0 0.22  0 0 0 0.025 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+
+    --serif: "Charter", "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: "SF Mono", "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    --radius-xl: 24px;
+    --radius-lg: 18px;
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  [data-theme="dark"] {
+    --bg: #14110d;
+    --bg-2: #1c1812;
+    --paper: #1a1610;
+    --paper-2: #221d16;
+    --ink: #f2e8d8;
+    --ink-2: #c7b9a3;
+    --muted: #8a7a66;
+    --muted-2: #6b5d4b;
+    --rule: #2a241d;
+    --rule-2: #3d342a;
+    --accent: #f56a43;
+    --accent-2: #ff9978;
+    --accent-soft: rgba(245, 106, 67, 0.14);
+    --ok: #9cc457;
+    --ok-soft: rgba(156, 196, 87, 0.14);
+    --err: #ff8070;
+    --err-soft: rgba(255, 128, 112, 0.1);
+    --primary-hover: #faf2e6;
+    --body-bg:
+      radial-gradient(ellipse 1000px 500px at 50% -10%, rgba(245, 106, 67, 0.06), transparent 60%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.9  0 0 0 0 0.8  0 0 0 0 0.7  0 0 0 0.03 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  ::selection { background: var(--accent-soft); color: var(--accent-2); }
+
+  body {
+    margin: 0;
+    padding: 52px 20px 80px;
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink);
+    background-color: var(--bg);
+    background-image: var(--body-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
+  }
+  .wrap {
+    width: 100%;
+    max-width: 880px; /* Ampliado un poco para dar aire */
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .wrap > * { animation: fade-up 0.5s var(--ease) backwards; }
+  .wrap > header  { animation-delay: 0s; }
+  .wrap > .stage  { animation-delay: 0.06s; }
+  .wrap > .account { animation-delay: 0.12s; }
+  .wrap > footer  { animation-delay: 0.18s; }
+
+  /* ------------------------- Header ------------------------- */
+  header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 4px 6px 16px;
+  }
+  .logo {
+    width: 48px; height: 48px; flex: 0 0 48px;
+    border-radius: 12px;
+    display: grid; place-items: center;
+    background: var(--ink);
+    color: var(--paper);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 4px 12px -4px rgba(0, 0, 0, 0.25);
+    transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
+  }
+  .logo svg { width: 26px; height: 26px; fill: currentColor; }
+  .head-text { flex: 1; min-width: 0; }
+  header h1 {
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.1;
+  }
+  .head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 6px 10px;
+    border-radius: var(--radius-xs);
+    white-space: nowrap;
+    transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
+  }
+  .tag::before {
+    content: "";
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+
+  /* ------------------------- Theme toggle ------------------------- */
+  .theme-toggle {
+    width: 38px; height: 38px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink-2);
+    cursor: pointer;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    transition:
+      background-color 0.25s var(--ease),
+      border-color 0.25s var(--ease),
+      color 0.25s var(--ease),
+      transform 0.2s var(--ease-spring);
+  }
+  .theme-toggle:hover {
+    background: var(--bg);
+    border-color: var(--rule-2);
+    color: var(--ink);
+  }
+  .theme-toggle:active {
+    transform: scale(0.92);
+  }
+  .theme-toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle-icons {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+  }
+  .theme-toggle svg {
+    grid-area: 1 / 1;
+    width: 16px; height: 16px;
+    transition: opacity 0.3s var(--ease), transform 0.5s var(--ease-spring);
+  }
+  .theme-toggle .sun {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.4);
+  }
+  .theme-toggle .moon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+  [data-theme="dark"] .theme-toggle .sun {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+  [data-theme="dark"] .theme-toggle .moon {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.4);
+  }
+
+  /* ------------------------- Stage (horizontal card) ------------------------- */
+  .stage {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr; /* Ajustado para que la derecha tenga más espacio */
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.03),
+      0 16px 40px -16px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease);
+  }
+  [data-theme="dark"] .stage,
+  [data-theme="dark"] .account {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.03),
+      0 16px 40px -16px rgba(0, 0, 0, 0.5);
+  }
+  .stage-col {
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    position: relative;
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease);
+  }
+  .stage-col-left {
+    background: var(--paper);
+    border-right: 1px solid var(--rule);
+  }
+  .stage-col-left::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 28px;
+    width: 44px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 0 0 3px 3px;
+    transition: background-color 0.35s var(--ease);
+  }
+  .stage-col-right {
+    background: var(--paper-2);
+  }
+
+  .col-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    flex: 0 0 auto;
+    transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
+  }
+  .col-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+
+  /* ------------------------- Inputs ------------------------- */
+  .row { display: flex; gap: 8px; }
+  .row > input { flex: 1; min-width: 0; }
+
+  input, select {
+    width: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition:
+      background-color 0.25s var(--ease),
+      border-color 0.2s var(--ease),
+      box-shadow 0.2s var(--ease),
+      color 0.25s var(--ease);
+  }
+  input::placeholder { color: var(--muted-2); }
+  input:hover:not(:focus):not(:disabled) { border-color: var(--rule-2); }
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: var(--bg-2);
+  }
+  select { cursor: pointer; }
+
+  /* ------------------------- Botones ------------------------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid var(--rule-2);
+    border-radius: var(--radius-sm);
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--paper);
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      background-color 0.2s var(--ease),
+      border-color 0.2s var(--ease),
+      color 0.2s var(--ease),
+      transform 0.15s var(--ease),
+      box-shadow 0.25s var(--ease);
+  }
+  .btn:hover:not(:disabled) {
+    background: var(--bg);
+    border-color: var(--ink-2);
+  }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.ghost {
+    background: transparent;
+    border-color: var(--rule-2);
+    color: var(--ink-2);
+  }
+  .btn.ghost:hover:not(:disabled) {
+    background: var(--bg);
+    color: var(--ink);
+    border-color: var(--ink-2);
+  }
+  .btn.primary {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+    padding: 15px 22px;
+    font-size: 14.5px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .btn.primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+    border-color: var(--accent);
+    box-shadow:
+      0 0 0 1px var(--accent),
+      0 10px 24px -10px rgba(184, 66, 29, 0.35);
+    transform: translateY(-1px);
+  }
+  .btn.primary:active:not(:disabled) { transform: translateY(0); }
+  .btn.small { padding: 8px 13px; font-size: 12.5px; }
+  .btn.steam {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--ink-2);
+  }
+  .btn.steam:hover:not(:disabled) {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .hint { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+  .hint code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--bg-2);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--ink-2);
+    transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
+  }
+  kbd {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--paper);
+    border: 1px solid var(--rule-2);
+    border-bottom-width: 2px;
+    color: var(--ink-2);
+    line-height: 1.3;
+    vertical-align: 1px;
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease), color 0.35s var(--ease);
+  }
+
+  .naming-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 2px 0;
+  }
+  .naming-row label {
+    font-size: 12.5px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .naming-row select {
+    width: auto;
+    min-width: 150px;
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+
+  /* ------------------------- Result ------------------------- */
+  .result {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 16px;
+    margin-top: 4px;
+    border-top: 1px dashed var(--rule);
+  }
+  .result-head { display: flex; gap: 12px; align-items: flex-start; }
+  .thumb {
+    width: 76px; height: 76px; flex: 0 0 76px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    background: var(--bg-2);
+    border: 1px solid var(--rule);
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease);
+  }
+  .result-title {
+    font-size: 15.5px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+    margin: 0 0 8px;
+    word-break: break-word;
+    color: var(--ink);
+  }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--muted);
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-variant-numeric: tabular-nums;
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease), color 0.35s var(--ease);
+  }
+  .badge.blue {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: rgba(184, 66, 29, 0.15);
+  }
+  .item-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-top: 4px;
+    background: var(--paper);
+  }
+  .item-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    border-bottom: 1px solid var(--rule);
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease), color 0.35s var(--ease);
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-row span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .item-row span:last-child {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--muted);
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ------------------------- Progress ------------------------- */
+  .progress {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 14px;
+    margin-top: 4px;
+    border-top: 1px dashed var(--rule);
+  }
+  .p-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    gap: 8px;
+  }
+  .p-top .pct {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    flex: 0 0 auto;
+  }
+  .bar {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--bg-2);
+    overflow: hidden;
+    transition: background-color 0.35s var(--ease);
+  }
+  .bar > div {
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: width 0.35s var(--ease), background-color 0.35s var(--ease);
+  }
+  .bar.indeterminate > div {
+    width: 35% !important;
+    animation: slide 1.3s ease-in-out infinite;
+  }
+  @keyframes slide {
+    0%   { margin-left: -35%; }
+    100% { margin-left: 100%; }
+  }
+
+  /* ------------------------- Alert ------------------------- */
+  .alert {
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    border: 1px solid rgba(143, 46, 36, 0.2);
+    background: var(--err-soft);
+    color: var(--err);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .alert.neutral {
+    border-color: var(--rule);
+    background: var(--bg);
+    color: var(--muted);
+  }
+  .hidden { display: none !important; }
+
+  /* ------------------------- Account card ------------------------- */
+  .account {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.03),
+      0 8px 24px -12px rgba(0, 0, 0, 0.06);
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease);
+  }
+  .account-head { display: flex; gap: 14px; align-items: center; }
+  .steam-ico {
+    width: 40px; height: 40px; flex: 0 0 40px;
+    border-radius: var(--radius-sm);
+    display: grid; place-items: center;
+    background: var(--bg-2);
+    border: 1px solid var(--rule);
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease);
+  }
+  .steam-ico svg { width: 20px; height: 20px; fill: var(--ink-2); transition: fill 0.35s var(--ease); }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .account-status { font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .account-status b { color: var(--ink); font-weight: 600; }
+  .dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted-2);
+    margin-right: 8px;
+    vertical-align: 1px;
+    transition: background-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
+  }
+  .dot.ok { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
+
+  /* ------------------------- Login box ------------------------- */
+  .login-box {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 18px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease);
+  }
+  #qrCanvas {
+    background: #ffffff;
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    width: 220px; height: 220px;
+    flex: 0 0 auto;
+    border: 1px solid var(--rule);
+    box-shadow: 0 4px 12px -6px rgba(0, 0, 0, 0.1);
+  }
+  .login-info { flex: 1; min-width: 190px; display: flex; flex-direction: column; gap: 10px; }
+  .login-title {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    margin: 0;
+    color: var(--ink);
+  }
+  .login-steps {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .login-steps b { color: var(--ink-2); font-weight: 600; }
+  #loginMsg { min-height: 18px; }
+
+  /* ------------------------- Logs ------------------------- */
+  details.logs { font-size: 12px; color: var(--muted); }
+  details.logs summary {
+    cursor: pointer;
+    padding: 4px 0;
+    list-style: none;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  details.logs summary::-webkit-details-marker { display: none; }
+  details.logs summary::before {
+    content: "▸";
+    display: inline-block;
+    transition: transform 0.25s var(--ease-spring);
+    color: var(--accent);
+    font-size: 10px;
+  }
+  details.logs[open] summary::before { transform: rotate(90deg); }
+  details.logs pre {
+    margin: 10px 0 0;
+    max-height: 200px;
+    overflow: auto;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 11px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--ink-2);
+    font-family: var(--mono);
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease), color 0.35s var(--ease);
+  }
+
+  /* ------------------------- Spin ------------------------- */
+  .spin {
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    border: 2px solid var(--rule-2);
+    border-top-color: var(--ink);
+    display: inline-block;
+    vertical-align: -2px;
+    animation: spin 0.7s linear infinite;
+  }
+  .btn.primary .spin {
+    border-color: rgba(255, 255, 255, 0.2);
+    border-top-color: var(--paper);
+  }
+  .btn.steam .spin { border-color: var(--rule-2); border-top-color: var(--ink); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ------------------------- Footer ------------------------- */
+  footer {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--muted-2);
+    line-height: 1.7;
+    padding-top: 8px;
+  }
+
+  /* ------------------------- Responsive ------------------------- */
+  @media (max-width: 720px) {
+    .stage { grid-template-columns: 1fr; }
+    .stage-col-left { border-right: none; border-bottom: 1px solid var(--rule); }
+  }
+  @media (max-width: 520px) {
+    body { padding: 32px 14px 60px; }
+    header { gap: 12px; }
+    .logo { width: 42px; height: 42px; flex-basis: 42px; border-radius: 10px; }
+    .logo svg { width: 22px; height: 22px; }
+    header h1 { font-size: 24px; }
+    .stage-col { padding: 20px; }
+    .stage-col-left::before { left: 20px; width: 36px; }
+    .login-box { justify-content: center; }
+    #qrCanvas { width: 180px; height: 180px; }
+    .btn { padding: 11px 15px; }
+    .btn.primary { padding: 13px 18px; }
+    .account { padding: 16px 18px; }
+  }
+  @media (max-width: 420px) {
+    .tag { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">
+      <!-- Icono de Steam SVG -->
+      <svg viewBox="0 0 24 24">
+        <path d="M11.98 2a10 10 0 0 0-9.96 9.1l5.35 2.22a2.83 2.83 0 0 1 1.6-.49h.15l2.38-3.45v-.05a3.78 3.78 0 1 1 3.78 3.78h-.09l-3.4 2.43v.12a2.84 2.84 0 0 1-5.63.57L2.2 14.6A10 10 0 1 0 11.98 2Zm-4.22 15.2-1.2-.5a2.13 2.13 0 0 0 3.9-.9 2.13 2.13 0 0 0-2.9-1.97l1.24.52a1.57 1.57 0 1 1-1.24 2.87l.2-.02Zm10.1-7.6a2.52 2.52 0 1 1-5.04 0 2.52 2.52 0 0 1 5.04 0Zm-4.4 0a1.89 1.89 0 1 0 3.78 0 1.89 1.89 0 0 0-3.78 0Z"/>
+      </svg>
+    </div>
+    <div class="head-text">
+      <h1>Steam Workshop Downloader</h1>
+    </div>
+    <div class="head-actions">
+      <span class="tag">LOCAL</span>
+      <button id="themeToggle" class="theme-toggle" type="button"
+              aria-label="Cambiar tema claro/oscuro" title="Cambiar tema claro/oscuro">
+        <span class="theme-toggle-icons">
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <section class="stage">
+    <div class="stage-col stage-col-left">
+      <div class="col-head">
+        <span class="step">01</span>
+        <span class="col-title">Enlace del Workshop</span>
+      </div>
+      <div class="row">
+        <input id="url" type="text" spellcheck="false" autocomplete="off"
+               placeholder="https://steamcommunity.com/sharedfiles/filedetails/?id=…" />
+        <button id="btnResolve" class="btn ghost">Buscar</button>
+      </div>
+      <p class="hint">Acepta URL, enlace de app o ID numérico. <kbd>Enter</kbd> para buscar.</p>
+      <div id="result" class="result hidden"></div>
+    </div>
+
+    <div class="stage-col stage-col-right">
+      <div class="col-head">
+        <span class="step">02</span>
+        <span class="col-title">Destino y descarga</span>
+      </div>
+      <div class="row">
+        <input id="dest" type="text" spellcheck="false" autocomplete="off" list="dirs"
+               placeholder="C:\Users\…\Downloads\SteamMods" />
+        <button id="btnBrowse" class="btn ghost">Elegir</button>
+      </div>
+      <datalist id="dirs"></datalist>
+      <div class="naming-row">
+        <label for="naming">Nombre de carpeta</label>
+        <select id="naming">
+          <option value="title">Título del mod</option>
+          <option value="id">ID (formato Steam)</option>
+        </select>
+      </div>
+      <button id="btnDownload" class="btn primary" disabled>Descargar</button>
+      <div id="progress" class="progress hidden">
+        <div class="p-top"><span id="phase">Preparando…</span><span id="pct" class="pct">0%</span></div>
+        <div id="bar" class="bar"><div id="barFill"></div></div>
+        <p id="pmsg" class="hint"></p>
+        <div id="progressActions" class="row">
+          <button id="btnCancel" class="btn ghost small">Cancelar</button>
+        </div>
+        <div id="doneActions" class="row hidden" style="gap:8px;">
+          <button id="btnOpen" class="btn ghost small">Abrir carpeta</button>
+          <button id="btnAgain" class="btn ghost small">Descargar otro</button>
+        </div>
+        <details class="logs hidden" id="logsWrap">
+          <summary>Ver registro</summary>
+          <pre id="logs"></pre>
+        </details>
+      </div>
+      <div id="error" class="alert hidden"></div>
+    </div>
+  </section>
+
+  <section class="account" id="accountCard">
+    <div class="account-head">
+      <div class="steam-ico">
+        <svg viewBox="0 0 24 24">
+          <path d="M11.98 2a10 10 0 0 0-9.96 9.1l5.35 2.22a2.83 2.83 0 0 1 1.6-.49h.15l2.38-3.45v-.05a3.78 3.78 0 1 1 3.78 3.78h-.09l-3.4 2.43v.12a2.84 2.84 0 0 1-5.63.57L2.2 14.6A10 10 0 1 0 11.98 2Zm-4.22 15.2-1.2-.5a2.13 2.13 0 0 0 3.9-.9 2.13 2.13 0 0 0-2.9-1.97l1.24.52a1.57 1.57 0 1 1-1.24 2.87l.2-.02Zm10.1-7.6a2.52 2.52 0 1 1-5.04 0 2.52 2.52 0 0 1 5.04 0Zm-4.4 0a1.89 1.89 0 1 0 3.78 0 1.89 1.89 0 0 0-3.78 0Z"/>
+        </svg>
+      </div>
+      <div style="flex:1; min-width:0;">
+        <div class="eyebrow">Cuenta de Steam</div>
+        <div class="account-status" id="accountStatus"><span class="dot"></span> No conectada · solo hace falta para juegos de pago</div>
+      </div>
+      <button id="btnConnect" class="btn steam">Conectar con Steam</button>
+      <button id="btnLogout" class="btn ghost small hidden">Desconectar</button>
+    </div>
+
+    <div id="loginBox" class="login-box hidden">
+      <canvas id="qrCanvas" width="200" height="200"></canvas>
+      <div class="login-info">
+        <p class="login-title">Escanea con la app de Steam</p>
+        <ol class="login-steps">
+          <li>Abre <b>Steam</b> en tu móvil</li>
+          <li>Entra en <b>Steam Guard → Iniciar sesión con QR</b></li>
+          <li>Apunta la cámara a este código</li>
+        </ol>
+        <p class="hint" id="loginMsg">Generando código…</p>
+        <button id="btnCancelLogin" class="btn ghost small" style="align-self:flex-start;">Cancelar</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Descargas con DepotDownloader (SteamKit2), la misma red oficial de Steam.<br>
+    La contraseña nunca pasa por esta app: la sesión se autoriza desde tu móvil.
+  </footer>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const state = {
+    resolved: null, jobId: null, loginJobId: null, running: false,
+    retryAfterLogin: false, cfg: null, steam: null, timer: null, loginTimer: null,
+  };
+
+  const urlInput = $("url");
+  const destInput = $("dest");
+  const namingSelect = $("naming");
+  const btnResolve = $("btnResolve");
+  const btnBrowse = $("btnBrowse");
+  const btnDownload = $("btnDownload");
+  const btnConnect = $("btnConnect");
+  const btnLogout = $("btnLogout");
+  const resultBox = $("result");
+  const errorBox = $("error");
+  const progressBox = $("progress");
+  const progressActions = $("progressActions");
+  const bar = $("bar");
+  const barFill = $("barFill");
+  const phaseEl = $("phase");
+  const pctEl = $("pct");
+  const pmsgEl = $("pmsg");
+  const doneActions = $("doneActions");
+  const btnOpen = $("btnOpen");
+  const btnAgain = $("btnAgain");
+  const btnCancel = $("btnCancel");
+  const logsWrap = $("logsWrap");
+  const logsEl = $("logs");
+  const loginBox = $("loginBox");
+  const loginMsg = $("loginMsg");
+  const qrCanvas = $("qrCanvas");
+  const themeToggle = $("themeToggle");
+
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+
+  /* --------------------------- Theme toggle --------------------------- */
+  themeToggle.addEventListener("click", () => {
+    const current = document.documentElement.dataset.theme || "light";
+    const next = current === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("theme", next); } catch {}
+  });
+
+  try {
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    mql.addEventListener("change", (e) => {
+      try { if (localStorage.getItem("theme")) return; } catch {}
+      document.documentElement.dataset.theme = e.matches ? "dark" : "light";
+    });
+  } catch {}
+
+  function parseId(text) {
+    const t = (text || "").trim();
+    const m = t.match(/[?&]id=(\d+)/) || t.match(/\/filedetails\/(\d+)/);
+    if (m) return m[1];
+    if (/^\d{4,20}$/.test(t)) return t;
+    return null;
+  }
+
+  function showError(msg, opts = {}) {
+    const { needsAuth = false, tone = "error" } = opts;
+    errorBox.innerHTML = "";
+    errorBox.className = "alert" + (tone === "neutral" ? " neutral" : "");
+    errorBox.classList.toggle("hidden", !msg);
+    if (!msg) return;
+    const text = document.createElement("div");
+    text.textContent = msg;
+    errorBox.appendChild(text);
+    if (needsAuth) {
+      const btn = document.createElement("button");
+      btn.className = "btn steam small";
+      btn.textContent = "Conectar con Steam y reintentar";
+      btn.addEventListener("click", () => startLogin(true));
+      errorBox.appendChild(btn);
+    }
+  }
+
+  function setBusy(busy) {
+    state.running = busy;
+    btnDownload.disabled = busy || !state.resolved;
+    btnResolve.disabled = busy;
+    urlInput.disabled = busy;
+  }
+
+  function fmtElapsed(seconds) {
+    const s = Math.max(0, Math.floor(Number(seconds) || 0));
+    if (s < 60) return s + " s";
+    const m = Math.floor(s / 60);
+    return m + ":" + String(s % 60).padStart(2, "0") + " min";
+  }
+
+  async function loadConfig() {
+    try {
+      const r = await fetch("/api/config");
+      const cfg = await r.json();
+      state.cfg = cfg;
+      destInput.value = cfg.dest || "";
+      namingSelect.value = cfg.naming || "title";
+      $("dirs").innerHTML = (cfg.suggestions || [])
+        .map((p) => `<option value="${esc(p)}"></option>`)
+        .join("");
+      renderSteam(cfg.steam || { connected: false });
+    } catch {
+      showError("No pude cargar la configuración. ¿Está corriendo app.py?");
+    }
+  }
+
+  function renderSteam(steam) {
+    state.steam = steam;
+    const status = $("accountStatus");
+    if (steam.connected) {
+      status.innerHTML = `<span class="dot ok"></span> Conectado como <b>${esc(steam.user)}</b>`;
+      btnConnect.classList.add("hidden");
+      btnLogout.classList.remove("hidden");
+    } else {
+      status.innerHTML = `<span class="dot"></span> No conectada · solo hace falta para juegos de pago`;
+      btnConnect.classList.remove("hidden");
+      btnLogout.classList.add("hidden");
+    }
+  }
+
+  async function refreshSteam() {
+    try {
+      const r = await fetch("/api/steam");
+      renderSteam(await r.json());
+    } catch {}
+  }
+
+  async function resolve() {
+    const id = parseId(urlInput.value);
+    if (!id) {
+      state.resolved = null;
+      resultBox.classList.add("hidden");
+      btnDownload.disabled = true;
+      if (urlInput.value.trim()) showError("Ese enlace no tiene un ID de mod válido.");
+      return;
+    }
+    showError("");
+    btnResolve.innerHTML = '<span class="spin"></span>';
+    try {
+      const r = await fetch("/api/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: urlInput.value }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || "No pude leer ese enlace.");
+      state.resolved = data;
+      renderResult(data);
+      btnDownload.disabled = state.running;
+    } catch (e) {
+      state.resolved = null;
+      resultBox.classList.add("hidden");
+      btnDownload.disabled = true;
+      showError(e.message);
+    } finally {
+      btnResolve.textContent = "Buscar";
+    }
+  }
+
+  function renderResult(data) {
+    const single = data.kind === "item";
+    const first = data.items[0] || {};
+    const more = data.items.length > 6 ? data.items.length - 6 : 0;
+
+    let html = `<div class="result-head">`;
+    if (single && first.thumb) {
+      html += `<img class="thumb" src="${esc(first.thumb)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.display='none'">`;
+    }
+    html += `<div style="min-width:0;flex:1;">
+      <p class="result-title">${esc(data.title || first.title)}</p>
+      <div class="badges">
+        <span class="badge ${single ? "" : "blue"}">${single ? "Mod individual" : "Colección · " + data.count + " mods"}</span>
+        ${first.appid ? `<span class="badge">App ${first.appid}</span>` : ""}
+        ${data.total_size_text ? `<span class="badge">${esc(data.total_size_text)}</span>` : ""}
+      </div>
+    </div></div>`;
+
+    if (!single) {
+      html += `<div class="item-list">` + data.items.slice(0, 6).map((it) => (
+        `<div class="item-row"><span>${esc(it.title)}</span><span>${esc(it.size_text || "")}</span></div>`
+      )).join("") + `</div>`;
+      if (more > 0) html += `<p class="hint">y ${more} mod${more === 1 ? "" : "s"} más…</p>`;
+    }
+
+    resultBox.innerHTML = html;
+    resultBox.classList.remove("hidden");
+  }
+
+  async function download() {
+    if (!state.resolved || state.running) return;
+    const dest = destInput.value.trim();
+    if (!dest) {
+      showError("Elige una carpeta de destino.");
+      destInput.focus();
+      return;
+    }
+
+    showError("");
+    setBusy(true);
+    resetProgress();
+    progressBox.classList.remove("hidden");
+
+    try {
+      const payload = {
+        ids: state.resolved.items.map((i) => i.fileid),
+        dest,
+        naming: namingSelect.value,
+      };
+      const r = await fetch("/api/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || "No pude iniciar la descarga.");
+
+      state.jobId = data.id;
+      poll();
+    } catch (e) {
+      progressBox.classList.add("hidden");
+      setBusy(false);
+      showError(e.message);
+    }
+  }
+
+  function resetProgress() {
+    bar.classList.remove("indeterminate");
+    barFill.style.width = "0%";
+    phaseEl.textContent = "Preparando…";
+    pctEl.textContent = "0%";
+    pmsgEl.textContent = "";
+    doneActions.classList.add("hidden");
+    progressActions.classList.remove("hidden");
+    logsWrap.classList.add("hidden");
+    logsEl.textContent = "";
+  }
+
+  async function poll() {
+    if (!state.jobId) return;
+    try {
+      const r = await fetch("/api/jobs/" + state.jobId);
+      if (!r.ok) throw new Error("Se perdió el trabajo de descarga.");
+      const job = await r.json();
+      renderJob(job);
+
+      if (job.status === "done") {
+        setBusy(false);
+        bar.classList.remove("indeterminate");
+        barFill.style.width = "100%";
+        pctEl.textContent = "100%";
+        phaseEl.textContent = "Listo";
+        pmsgEl.textContent = job.folders && job.folders[0]
+          ? "Guardado en: " + job.folders[0]
+          : "Descarga completada.";
+        progressActions.classList.add("hidden");
+        doneActions.classList.remove("hidden");
+        showError("");
+        return;
+      }
+      if (job.status === "error" || job.status === "cancelled") {
+        setBusy(false);
+        progressBox.classList.add("hidden");
+        if (job.status === "cancelled") {
+          showError("Descarga cancelada.", { tone: "neutral" });
+        } else {
+          showError(job.error || "No se pudo descargar el mod.", { needsAuth: job.needs_auth });
+        }
+        return;
+      }
+      state.timer = setTimeout(poll, 600);
+    } catch (e) {
+      setBusy(false);
+      progressBox.classList.add("hidden");
+      showError(e.message);
+    }
+  }
+
+  function renderJob(job) {
+    const pct = Math.max(0, Math.min(100, Number(job.percent) || 0));
+    const indeterminate = !!job.indeterminate;
+    phaseEl.textContent = job.phase || "";
+    bar.classList.toggle("indeterminate", indeterminate);
+    pctEl.textContent = indeterminate ? fmtElapsed(job.elapsed) : Math.round(pct) + "%";
+    if (!indeterminate) barFill.style.width = pct + "%";
+    pmsgEl.textContent = job.message || "";
+    if (job.logs && job.logs.length) {
+      logsWrap.classList.remove("hidden");
+      logsEl.textContent = job.logs.join("\n");
+      logsEl.scrollTop = logsEl.scrollHeight;
+    }
+  }
+
+  async function startLogin(retryDownload) {
+    if (state.loginJobId) return;
+    state.retryAfterLogin = !!retryDownload;
+    loginBox.classList.remove("hidden");
+    loginMsg.textContent = "Generando código QR…";
+    qrCanvas.classList.add("hidden");
+    btnConnect.disabled = true;
+    $("accountCard").scrollIntoView({ behavior: "smooth", block: "center" });
+
+    try {
+      const r = await fetch("/api/steam/login", { method: "POST" });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || "No pude iniciar sesión.");
+      if (state.loginJobId) return;
+      state.loginJobId = data.id;
+      pollLogin();
+    } catch (e) {
+      btnConnect.disabled = false;
+      loginMsg.textContent = e.message;
+    }
+  }
+
+  async function pollLogin() {
+    if (!state.loginJobId) return;
+    try {
+      const r = await fetch("/api/jobs/" + state.loginJobId);
+      if (!r.ok) throw new Error("Se perdió la conexión con el inicio de sesión.");
+      const job = await r.json();
+
+      if (job.qr) {
+        drawQr(job.qr);
+        qrCanvas.classList.remove("hidden");
+      }
+      if (job.message) loginMsg.textContent = job.message;
+
+      if (job.status === "done") {
+        state.loginJobId = null;
+        btnConnect.disabled = false;
+        loginBox.classList.add("hidden");
+        await refreshSteam();
+        if (state.retryAfterLogin) {
+          state.retryAfterLogin = false;
+          setTimeout(download, 300);
+        }
+        return;
+      }
+      if (job.status === "error" || job.status === "cancelled") {
+        state.loginJobId = null;
+        btnConnect.disabled = false;
+        loginMsg.textContent = job.error || "No se pudo conectar.";
+        qrCanvas.classList.add("hidden");
+        return;
+      }
+      state.loginTimer = setTimeout(pollLogin, 700);
+    } catch (e) {
+      state.loginJobId = null;
+      btnConnect.disabled = false;
+      loginMsg.textContent = e.message;
+    }
+  }
+
+  function drawQr(qr) {
+    const pad = 4;
+    const total = qr.size + pad * 2;
+    const scale = Math.max(3, Math.floor(400 / total));
+    qrCanvas.width = total * scale;
+    qrCanvas.height = total * scale;
+    const ctx = qrCanvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, qrCanvas.width, qrCanvas.height);
+    ctx.fillStyle = "#000000";
+    qr.rows.forEach((row, y) => {
+      for (let x = 0; x < row.length; x++) {
+        if (row[x] === "1") ctx.fillRect((x + pad) * scale, (y + pad) * scale, scale, scale);
+      }
+    });
+  }
+
+  async function cancelLogin() {
+    if (state.loginJobId) {
+      await fetch("/api/jobs/" + state.loginJobId + "/cancel", { method: "POST" }).catch(() => {});
+    }
+    state.loginJobId = null;
+    clearTimeout(state.loginTimer);
+    loginBox.classList.add("hidden");
+    btnConnect.disabled = false;
+  }
+
+  let typing = null;
+  urlInput.addEventListener("input", () => {
+    clearTimeout(typing);
+    showError("");
+    if (state.running) return;
+    const value = urlInput.value;
+    if (!parseId(value)) {
+      state.resolved = null;
+      resultBox.classList.add("hidden");
+      btnDownload.disabled = true;
+      return;
+    }
+    typing = setTimeout(resolve, 550);
+  });
+
+  urlInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { clearTimeout(typing); resolve(); }
+  });
+
+  btnResolve.addEventListener("click", () => { clearTimeout(typing); resolve(); });
+
+  destInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") download();
+  });
+
+  btnDownload.addEventListener("click", download);
+
+  btnBrowse.addEventListener("click", async () => {
+    const previous = btnBrowse.textContent;
+    btnBrowse.disabled = true;
+    btnBrowse.innerHTML = '<span class="spin"></span>';
+    try {
+      const r = await fetch("/api/browse", { method: "POST" });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || "No pude abrir el selector.");
+      if (data.path) {
+        destInput.value = data.path;
+        showError("");
+      }
+    } catch (e) {
+      showError(e.message + " — puedes escribir la ruta a mano.");
+    } finally {
+      btnBrowse.disabled = false;
+      btnBrowse.textContent = previous;
+    }
+  });
+
+  btnOpen.addEventListener("click", async () => {
+    const path = (pmsgEl.textContent || "").replace(/^Guardado en:\s*/, "");
+    if (!path) return;
+    try {
+      await fetch("/api/open", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path }),
+      });
+    } catch {}
+  });
+
+  btnAgain.addEventListener("click", () => {
+    state.resolved = null;
+    state.jobId = null;
+    urlInput.value = "";
+    urlInput.disabled = false;
+    resultBox.classList.add("hidden");
+    progressBox.classList.add("hidden");
+    btnDownload.disabled = true;
+    showError("");
+    urlInput.focus();
+  });
+
+  btnCancel.addEventListener("click", async () => {
+    if (!state.jobId) return;
+    btnCancel.disabled = true;
+    try {
+      await fetch("/api/jobs/" + state.jobId + "/cancel", { method: "POST" });
+    } catch {}
+    btnCancel.disabled = false;
+  });
+
+  btnConnect.addEventListener("click", () => startLogin(false));
+  $("btnCancelLogin").addEventListener("click", cancelLogin);
+
+  btnLogout.addEventListener("click", async () => {
+    await fetch("/api/steam/logout", { method: "POST" }).catch(() => {});
+    await refreshSteam();
+  });
+
+  loadConfig();
+})();
+</script>
+</body>
+</html>
