@@ -20,6 +20,23 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
+## Explorar el Workshop
+
+En la pestaña **Explorar Workshop** puedes buscar un juego por su nombre y ver
+sus mods sin salir de la app:
+
+- **Más populares**: ordenados por estrellas (mejor valorados).
+- **Más suscripciones**: ordenados por número de suscriptores.
+
+Cada tarjeta muestra miniatura, título, descripción corta, valoración,
+suscriptores, tamaño y etiquetas. El botón **Descargar** lleva el mod a la
+pestaña de descarga y lo baja a la carpeta que tengas elegida; **↗** abre su
+página en Steam. También se guardan los últimos juegos visitados.
+
+No hace falta ninguna clave de API: la app lee los datos públicos que Steam
+publica en la propia web del Workshop. Los resultados se cachean unos minutos
+para no pedir la misma página dos veces.
+
 ## Iniciar sesión con Steam (opcional)
 
 La mayoría de mods se descargan de forma anónima. Si el mod es de un juego de pago,
@@ -42,10 +59,13 @@ Si no tienes la app móvil de Steam, los mods de juegos de pago no se pueden baj
 - Resuelve el enlace con la API pública de Steam (`GetPublishedFileDetails`) para
   obtener título, app y tamaño.
 - Descarga el contenido con **DepotDownloader** (SteamKit2, la misma red oficial de
-  Steam), sin copias temporales: los archivos van directo a la carpeta elegida.
+  Steam). La descarga se hace en una carpeta temporal oculta y solo se mueve a su
+  destino cuando está completa, así que un fallo no borra una copia anterior.
   También extrae solo los archivos reales del mod (`.bin` de contenido antiguo).
 - Permite iniciar sesión escaneando un QR con la app oficial de Steam y reutiliza
   ese token en las siguientes descargas.
+- Navega por el Workshop de cualquier juego (populares y más suscritos) leyendo
+  los datos públicos de la web de Steam, sin clave de API.
 
 ## Notas
 
@@ -59,8 +79,9 @@ Si no tienes la app móvil de Steam, los mods de juegos de pago no se pueden baj
 
 | Archivo | Qué es |
 | --- | --- |
-| `app.py` | Servidor, trabajos de descarga y login con QR |
+| `app.py` | Servidor, descargas, login con QR y explorador del Workshop |
 | `static/index.html` | Interfaz |
 | `iniciar.bat` | Lanzador para Windows |
-| `config.json` | Carpeta de destino y preferencias (se crea solo) |
-| `vendor/depotdownloader/` | DepotDownloader (se crea solo) |
+| `config.json` | Carpeta de destino y preferencias (local, no se versiona) |
+| `vendor/depotdownloader/` | DepotDownloader (se descarga solo) |
+| `tests/` | Tests básicos (`python -m unittest discover -s tests`) |

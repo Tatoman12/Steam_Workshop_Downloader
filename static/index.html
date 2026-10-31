@@ -759,6 +759,263 @@
     padding-top: 8px;
   }
 
+  /* ------------------------- Vistas / Explorador ------------------------- */
+  .view-tabs {
+    display: inline-flex;
+    align-self: center;
+    gap: 4px;
+    padding: 4px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease);
+  }
+  .view-tab {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.2s var(--ease), color 0.2s var(--ease);
+  }
+  .view-tab:hover { color: var(--ink); }
+  .view-tab.active { background: var(--ink); color: var(--paper); }
+
+  .explore {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-xl);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.03),
+      0 16px 40px -16px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease);
+  }
+  [data-theme="dark"] .explore {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.03),
+      0 16px 40px -16px rgba(0, 0, 0, 0.5);
+  }
+
+  .game-search { position: relative; }
+  .game-results {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--paper);
+    border: 1px solid var(--rule-2);
+    border-radius: var(--radius);
+    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .game-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border: 0;
+    border-bottom: 1px solid var(--rule);
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .game-option:last-child { border-bottom: 0; }
+  .game-option:hover { background: var(--bg); }
+  .game-option img {
+    width: 28px; height: 28px; flex: 0 0 28px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: var(--bg-2);
+  }
+  .game-option .g-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .game-option .g-id {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+  .game-option.empty { color: var(--muted); cursor: default; }
+  .game-option.empty:hover { background: transparent; }
+
+  .recent-games { display: flex; flex-wrap: wrap; gap: 6px; }
+  .recent-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 240px;
+    padding: 6px 11px 6px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+  }
+  .recent-chip:hover { border-color: var(--ink-2); color: var(--ink); }
+  .recent-chip img {
+    width: 18px; height: 18px; flex: 0 0 18px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--bg-2);
+  }
+  .recent-chip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .game-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+  }
+  .game-header img {
+    width: 46px; height: 46px; flex: 0 0 46px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: var(--bg-2);
+  }
+  .game-header .gh-text { flex: 1; min-width: 0; }
+  .game-header h2 {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .game-header p { margin: 0; font-size: 12px; color: var(--muted); }
+
+  .sort-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sort-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--rule-2);
+    background: var(--paper);
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease);
+  }
+  .sort-tab:hover { border-color: var(--ink-2); color: var(--ink); }
+  .sort-tab.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .mod-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+  }
+  .mod-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    transition:
+      border-color 0.2s var(--ease),
+      transform 0.2s var(--ease),
+      box-shadow 0.2s var(--ease);
+  }
+  .mod-card:hover {
+    border-color: var(--rule-2);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.35);
+  }
+  .mod-thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: var(--bg-2);
+  }
+  .mod-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 13px 13px;
+    flex: 1;
+  }
+  .mod-title {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .mod-desc {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .mod-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: auto;
+  }
+  .mod-meta .badge { padding: 2px 6px; font-size: 10px; }
+  .mod-actions { display: flex; gap: 6px; margin-top: 2px; }
+  .mod-actions .btn { flex: 1; padding: 8px 10px; font-size: 12px; }
+  .mod-actions .btn.steam { flex: 0 0 auto; }
+
+  .explore-empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 28px 12px;
+    border: 1px dashed var(--rule-2);
+    border-radius: var(--radius);
+  }
+  .explore-foot { display: flex; justify-content: center; }
+
   /* ------------------------- Responsive ------------------------- */
   @media (max-width: 720px) {
     .stage { grid-template-columns: 1fr; }
@@ -777,6 +1034,13 @@
     .btn { padding: 11px 15px; }
     .btn.primary { padding: 13px 18px; }
     .account { padding: 16px 18px; }
+    .explore { padding: 16px; }
+    .mod-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mod-desc { display: none; }
+    .mod-body { padding: 9px; gap: 6px; }
+    .mod-actions .btn { padding: 7px 8px; font-size: 11px; }
+    .game-header { flex-wrap: wrap; }
+    .game-header .btn { margin-left: 60px; }
   }
   @media (max-width: 420px) {
     .tag { display: none; }
@@ -813,7 +1077,12 @@
     </div>
   </header>
 
-  <section class="stage">
+  <nav class="view-tabs" role="tablist" aria-label="Vistas">
+    <button id="tabDownload" class="view-tab active" data-view="download" role="tab" aria-selected="true">Descargar</button>
+    <button id="tabExplore" class="view-tab" data-view="explore" role="tab" aria-selected="false">Explorar Workshop</button>
+  </nav>
+
+  <section class="stage" id="viewDownload">
     <div class="stage-col stage-col-left">
       <div class="col-head">
         <span class="step">01</span>
@@ -867,6 +1136,41 @@
     </div>
   </section>
 
+  <section class="explore hidden" id="viewExplore">
+    <div class="col-head">
+      <span class="step">01</span>
+      <span class="col-title">Elige un juego</span>
+    </div>
+    <div class="game-search">
+      <input id="gameQuery" type="text" spellcheck="false" autocomplete="off"
+             placeholder="Busca un juego (p. ej. The Binding of Isaac: Rebirth)" />
+      <div id="gameResults" class="game-results hidden"></div>
+    </div>
+    <div id="recentGames" class="recent-games hidden"></div>
+
+    <div id="gameHeader" class="game-header hidden">
+      <img id="gameIcon" alt="" referrerpolicy="no-referrer" />
+      <div class="gh-text">
+        <h2 id="gameName">—</h2>
+        <p id="gameMeta"></p>
+      </div>
+      <a id="gameLink" class="btn ghost small" target="_blank" rel="noopener">Ver en Steam</a>
+    </div>
+
+    <div id="sortTabs" class="sort-tabs hidden">
+      <button class="sort-tab active" data-sort="popular" type="button">★ Más populares</button>
+      <button class="sort-tab" data-sort="subs" type="button">↓ Más suscripciones</button>
+    </div>
+    <p id="sortHint" class="hint hidden">Más populares = mejor valorados por estrellas · Más suscripciones = más instalados.</p>
+
+    <div id="modGrid" class="mod-grid"></div>
+    <div id="exploreEmpty" class="explore-empty">Busca un juego para ver sus mods del Workshop.</div>
+    <div id="exploreFoot" class="explore-foot hidden">
+      <button id="btnMore" class="btn ghost" type="button">Cargar más mods</button>
+    </div>
+    <div id="exploreError" class="alert hidden"></div>
+  </section>
+
   <section class="account" id="accountCard">
     <div class="account-head">
       <div class="steam-ico">
@@ -909,6 +1213,8 @@
   const state = {
     resolved: null, jobId: null, loginJobId: null, running: false,
     retryAfterLogin: false, cfg: null, steam: null, timer: null, loginTimer: null,
+    game: null, gameSort: "popular", modPage: 0, modPages: 1, modTotal: 0,
+    modLoading: false, modReq: 0, gameTimer: null, lastFolder: "",
   };
 
   const urlInput = $("url");
@@ -938,6 +1244,27 @@
   const loginMsg = $("loginMsg");
   const qrCanvas = $("qrCanvas");
   const themeToggle = $("themeToggle");
+
+  /* Explorador */
+  const tabDownload = $("tabDownload");
+  const tabExplore = $("tabExplore");
+  const viewDownload = $("viewDownload");
+  const viewExplore = $("viewExplore");
+  const gameQuery = $("gameQuery");
+  const gameResults = $("gameResults");
+  const recentGamesEl = $("recentGames");
+  const gameHeader = $("gameHeader");
+  const gameIcon = $("gameIcon");
+  const gameName = $("gameName");
+  const gameMeta = $("gameMeta");
+  const gameLink = $("gameLink");
+  const sortTabs = $("sortTabs");
+  const sortHint = $("sortHint");
+  const modGrid = $("modGrid");
+  const exploreEmpty = $("exploreEmpty");
+  const exploreFoot = $("exploreFoot");
+  const exploreError = $("exploreError");
+  const btnMore = $("btnMore");
 
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => (
     { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
@@ -1043,7 +1370,7 @@
       resultBox.classList.add("hidden");
       btnDownload.disabled = true;
       if (urlInput.value.trim()) showError("Ese enlace no tiene un ID de mod válido.");
-      return;
+      return null;
     }
     showError("");
     btnResolve.innerHTML = '<span class="spin"></span>';
@@ -1058,11 +1385,13 @@
       state.resolved = data;
       renderResult(data);
       btnDownload.disabled = state.running;
+      return data;
     } catch (e) {
       state.resolved = null;
       resultBox.classList.add("hidden");
       btnDownload.disabled = true;
       showError(e.message);
+      return null;
     } finally {
       btnResolve.textContent = "Buscar";
     }
@@ -1091,10 +1420,252 @@
         `<div class="item-row"><span>${esc(it.title)}</span><span>${esc(it.size_text || "")}</span></div>`
       )).join("") + `</div>`;
       if (more > 0) html += `<p class="hint">y ${more} mod${more === 1 ? "" : "s"} más…</p>`;
+      if (data.truncated) {
+        html += `<p class="hint">Colección muy grande: solo se procesan los primeros ${data.limit || 200} de ${data.total_children} mods.</p>`;
+      }
     }
 
     resultBox.innerHTML = html;
     resultBox.classList.remove("hidden");
+  }
+
+  /* --------------------------- Explorador --------------------------- */
+  const RECENT_GAMES_KEY = "recentGames";
+
+  const fmtCount = (n) => {
+    try {
+      return new Intl.NumberFormat("es-ES", { notation: "compact", maximumFractionDigits: 1 })
+        .format(Number(n) || 0);
+    } catch {
+      return String(n || 0);
+    }
+  };
+
+  function switchView(view) {
+    const explore = view === "explore";
+    viewDownload.classList.toggle("hidden", explore);
+    viewExplore.classList.toggle("hidden", !explore);
+    tabDownload.classList.toggle("active", !explore);
+    tabExplore.classList.toggle("active", explore);
+    tabDownload.setAttribute("aria-selected", String(!explore));
+    tabExplore.setAttribute("aria-selected", String(explore));
+  }
+
+  function loadRecentGames() {
+    try {
+      const list = JSON.parse(localStorage.getItem(RECENT_GAMES_KEY) || "[]");
+      return Array.isArray(list) ? list.filter((g) => g && g.appid && g.name) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveRecentGame(game) {
+    const list = loadRecentGames().filter((g) => g.appid !== game.appid);
+    list.unshift({ appid: game.appid, name: game.name, icon: game.icon || "" });
+    try {
+      localStorage.setItem(RECENT_GAMES_KEY, JSON.stringify(list.slice(0, 6)));
+    } catch {}
+    renderRecentGames();
+  }
+
+  function renderRecentGames() {
+    const list = loadRecentGames();
+    recentGamesEl.innerHTML = "";
+    recentGamesEl.classList.toggle("hidden", !list.length);
+    list.forEach((g) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "recent-chip";
+      chip.title = g.name;
+      chip.innerHTML =
+        (g.icon ? `<img src="${esc(g.icon)}" alt="" referrerpolicy="no-referrer">` : "") +
+        `<span>${esc(g.name)}</span>`;
+      chip.addEventListener("click", () => selectGame(g));
+      recentGamesEl.appendChild(chip);
+    });
+  }
+
+  async function searchGames(term) {
+    const query = (term || "").trim();
+    if (query.length < 2) {
+      gameResults.classList.add("hidden");
+      return;
+    }
+    gameResults.innerHTML = `<div class="game-option empty">Buscando…</div>`;
+    gameResults.classList.remove("hidden");
+    try {
+      const r = await fetch("/api/games/search?q=" + encodeURIComponent(query));
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || "No pude buscar juegos.");
+      renderGameResults(data.games || []);
+    } catch (e) {
+      gameResults.innerHTML = `<div class="game-option empty">${esc(e.message)}</div>`;
+    }
+  }
+
+  function renderGameResults(games) {
+    if (!games.length) {
+      gameResults.innerHTML = `<div class="game-option empty">Ningún juego encontrado.</div>`;
+      return;
+    }
+    gameResults.innerHTML = "";
+    games.forEach((g) => {
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "game-option";
+      option.innerHTML =
+        (g.icon ? `<img src="${esc(g.icon)}" alt="" referrerpolicy="no-referrer">` : "") +
+        `<span class="g-name">${esc(g.name)}</span><span class="g-id">${esc(g.appid)}</span>`;
+      option.addEventListener("click", () => {
+        gameResults.classList.add("hidden");
+        gameQuery.value = g.name;
+        selectGame(g);
+      });
+      gameResults.appendChild(option);
+    });
+  }
+
+  async function selectGame(game) {
+    state.game = { appid: String(game.appid), name: game.name, icon: game.icon || "" };
+    saveRecentGame(state.game);
+    gameHeader.classList.remove("hidden");
+    if (state.game.icon) {
+      gameIcon.src = state.game.icon;
+      gameIcon.style.display = "";
+    } else {
+      gameIcon.removeAttribute("src");
+      gameIcon.style.display = "none";
+    }
+    gameName.textContent = state.game.name;
+    gameMeta.textContent = "App " + state.game.appid;
+    gameLink.href = `https://steamcommunity.com/app/${state.game.appid}/workshop/`;
+    sortTabs.classList.remove("hidden");
+    sortHint.classList.remove("hidden");
+    state.modPage = 0;
+    state.modPages = 1;
+    modGrid.innerHTML = "";
+    await loadMods(true);
+  }
+
+  function showExploreError(msg) {
+    exploreError.textContent = msg || "";
+    exploreError.classList.toggle("hidden", !msg);
+  }
+
+  async function loadMods(reset) {
+    if (!state.game) return;
+    if (!reset && (state.modLoading || state.modPage >= state.modPages)) return;
+
+    if (reset) {
+      // Invalida cualquier petición anterior que aún esté en vuelo.
+      state.modReq += 1;
+      state.modPage = 0;
+      state.modPages = 1;
+      modGrid.innerHTML = `<div class="explore-empty" style="grid-column:1/-1;">Cargando mods…</div>`;
+      exploreFoot.classList.add("hidden");
+      exploreEmpty.classList.add("hidden");
+    }
+
+    const req = state.modReq;
+    const page = state.modPage + 1;
+    state.modLoading = true;
+    showExploreError("");
+    btnMore.disabled = true;
+    btnMore.textContent = "Cargando…";
+
+    try {
+      const r = await fetch(
+        `/api/workshop?appid=${encodeURIComponent(state.game.appid)}&sort=${state.gameSort}&page=${page}`
+      );
+      const data = await r.json();
+      if (req !== state.modReq) return; // Llegó tarde: ya hay otra búsqueda.
+      if (!r.ok) throw new Error(data.detail || "No pude leer el Workshop.");
+
+      if (reset) modGrid.innerHTML = "";
+      state.modPage = Number(data.page) || page;
+      state.modPages = Math.max(1, Number(data.pages) || 1);
+      state.modTotal = Number(data.total) || 0;
+
+      if (data.game && data.game.name) {
+        state.game.name = data.game.name;
+        gameName.textContent = data.game.name;
+      }
+      gameMeta.textContent =
+        `${state.modTotal.toLocaleString("es-ES")} mods · App ${state.game.appid}`;
+
+      if (!data.items.length) {
+        if (reset) {
+          exploreEmpty.textContent = state.modTotal
+            ? "No hay más mods en esta categoría."
+            : "Este juego no tiene Workshop (o no se pudo leer).";
+          exploreEmpty.classList.remove("hidden");
+        }
+      } else {
+        exploreEmpty.classList.add("hidden");
+        const frag = document.createDocumentFragment();
+        data.items.forEach((item) => frag.appendChild(modCard(item)));
+        modGrid.appendChild(frag);
+      }
+
+      const hasMore = state.modPage < state.modPages && state.modPage < 50;
+      exploreFoot.classList.toggle("hidden", !hasMore);
+    } catch (e) {
+      if (req === state.modReq) {
+        if (reset) modGrid.innerHTML = "";
+        showExploreError(e.message);
+      }
+    } finally {
+      if (req === state.modReq) {
+        state.modLoading = false;
+        btnMore.disabled = false;
+        btnMore.textContent = "Cargar más mods";
+      }
+    }
+  }
+
+  function modCard(item) {
+    const card = document.createElement("article");
+    card.className = "mod-card";
+
+    const starValue = Number(item.stars);
+    const starText = Number.isInteger(starValue)
+      ? String(starValue)
+      : starValue.toFixed(1).replace(".", ",");
+    const stars = starValue > 0
+      ? `★ ${starText}${item.votes ? ` (${fmtCount(item.votes)})` : ""}`
+      : "Sin valorar";
+    const badges = [
+      `<span class="badge blue">${stars}</span>`,
+      `<span class="badge">${esc(item.subscriptions_text || "0")} subs</span>`,
+      item.size_text && item.size_text !== "—" ? `<span class="badge">${esc(item.size_text)}</span>` : "",
+      ...(item.tags || []).slice(0, 2).map((tag) => `<span class="badge">${esc(tag)}</span>`),
+    ].join("");
+
+    card.innerHTML = `
+      ${item.thumb
+        ? `<img class="mod-thumb" src="${esc(item.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
+        : `<div class="mod-thumb"></div>`}
+      <div class="mod-body">
+        <p class="mod-title" title="${esc(item.title)}">${esc(item.title)}</p>
+        ${item.description ? `<p class="mod-desc">${esc(item.description)}</p>` : ""}
+        <div class="mod-meta">${badges}</div>
+        <div class="mod-actions">
+          <button class="btn primary" type="button">Descargar</button>
+          <a class="btn ghost steam" href="https://steamcommunity.com/sharedfiles/filedetails/?id=${encodeURIComponent(item.fileid)}"
+             target="_blank" rel="noopener" title="Abrir en Steam">↗</a>
+        </div>
+      </div>`;
+
+    card.querySelector("button").addEventListener("click", () => downloadFromCard(item.fileid));
+    return card;
+  }
+
+  async function downloadFromCard(fileid) {
+    switchView("download");
+    urlInput.value = "https://steamcommunity.com/sharedfiles/filedetails/?id=" + fileid;
+    const data = await resolve();
+    if (data) download();
   }
 
   async function download() {
@@ -1160,8 +1731,9 @@
         barFill.style.width = "100%";
         pctEl.textContent = "100%";
         phaseEl.textContent = "Listo";
-        pmsgEl.textContent = job.folders && job.folders[0]
-          ? "Guardado en: " + job.folders[0]
+        state.lastFolder = (job.folders && job.folders[0]) || "";
+        pmsgEl.textContent = state.lastFolder
+          ? "Guardado en: " + state.lastFolder
           : "Descarga completada.";
         progressActions.classList.add("hidden");
         doneActions.classList.remove("hidden");
@@ -1337,7 +1909,7 @@
   });
 
   btnOpen.addEventListener("click", async () => {
-    const path = (pmsgEl.textContent || "").replace(/^Guardado en:\s*/, "");
+    const path = state.lastFolder || (pmsgEl.textContent || "").replace(/^Guardado en:\s*/, "");
     if (!path) return;
     try {
       await fetch("/api/open", {
@@ -1377,6 +1949,52 @@
     await refreshSteam();
   });
 
+  /* --------------------------- Explorador: eventos --------------------------- */
+  tabDownload.addEventListener("click", () => switchView("download"));
+  tabExplore.addEventListener("click", () => switchView("explore"));
+
+  gameQuery.addEventListener("input", () => {
+    clearTimeout(state.gameTimer);
+    const term = gameQuery.value;
+    state.gameTimer = setTimeout(() => searchGames(term), 350);
+  });
+
+  gameQuery.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      gameResults.classList.add("hidden");
+      return;
+    }
+    if (e.key === "Enter") {
+      clearTimeout(state.gameTimer);
+      const first = gameResults.querySelector(".game-option:not(.empty)");
+      if (first) first.click();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!gameResults.contains(e.target) && e.target !== gameQuery) {
+      gameResults.classList.add("hidden");
+    }
+  });
+
+  sortTabs.addEventListener("click", (e) => {
+    const btn = e.target.closest(".sort-tab");
+    if (!btn || !state.game) return;
+    const sort = btn.dataset.sort;
+    if (sort === state.gameSort) return;
+    state.gameSort = sort;
+    sortTabs.querySelectorAll(".sort-tab").forEach((b) => {
+      b.classList.toggle("active", b === btn);
+    });
+    state.modPage = 0;
+    state.modPages = 1;
+    modGrid.innerHTML = "";
+    loadMods(true);
+  });
+
+  btnMore.addEventListener("click", () => loadMods(false));
+
+  renderRecentGames();
   loadConfig();
 })();
 </script>

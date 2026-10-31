@@ -1,0 +1,15 @@
+# Configuración local del usuario (rutas, historial, cuenta de Steam)
+config.json
+
+# Binarios descargados automáticamente
+vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Restos de descargas
+*.part-*
+*.old-*

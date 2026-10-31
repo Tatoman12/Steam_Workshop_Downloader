@@ -26,11 +26,12 @@ import uuid
 import webbrowser
 import zipfile
 from pathlib import Path
+from urllib.parse import quote, urlparse
 
 import requests
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel
 
 # --------------------------------------------------------------------------- #
@@ -61,6 +62,20 @@ API_COLLECTION = "https://api.steampowered.com/ISteamRemoteStorage/GetCollection
 DEFAULT_PORT = 8756
 MAX_COLLECTION_ITEMS = 200
 
+# Explorador del Workshop. La web pública de Steam incrusta los datos de cada
+# página en el HTML, así que se puede navegar sin clave de la Web API.
+COMMUNITY_BASE = "https://steamcommunity.com"
+SEARCH_APPS_URL = COMMUNITY_BASE + "/actions/SearchApps/"
+BROWSE_URL = COMMUNITY_BASE + "/workshop/browse/"
+BROWSE_SORTS = {"popular": "toprated", "subs": "totaluniquesubscribers"}
+MAX_BROWSE_PAGE = 50
+BROWSE_TTL = 300
+SEARCH_TTL = 900
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+)
+
 
 class UserError(Exception):
     """Error con un mensaje pensado para mostrarse tal cual al usuario."""
@@ -78,7 +93,6 @@ _config_lock = threading.Lock()
 DEFAULT_CONFIG = {
     "dest": "",
     "naming": "title",
-    "steam_user": "",
     "recent": [],
 }
 
@@ -99,8 +113,8 @@ def save_config(cfg: dict) -> None:
     with _config_lock:
         try:
             CONFIG_PATH.write_text(json.dumps(cfg, indent=2, ensure_ascii=False), "utf-8")
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001
+            print(f"[config] No se pudo guardar config.json: {exc}", file=sys.stderr)
 
 
 def default_dest() -> str:
@@ -137,6 +151,49 @@ def human_size(num: float) -> str:
             return f"{num:.0f} {unit}" if unit == "B" else f"{num:.1f} {unit}"
         num /= 1024
     return f"{num:.1f} TB"
+
+
+def _int(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def human_count(num: int) -> str:
+    num = max(0, _int(num))
+    if num >= 1_000_000_000:
+        return f"{num / 1_000_000_000:.1f} B".replace(".", ",")
+    if num >= 1_000_000:
+        return f"{num / 1_000_000:.1f} M".replace(".", ",")
+    if num >= 1_000:
+        return f"{num / 1_000:.1f} K".replace(".", ",")
+    return str(num)
+
+
+# Caché en memoria para no pedir la misma página del Workshop dos veces.
+_cache: dict[str, tuple[float, object, float]] = {}
+_cache_lock = threading.Lock()
+
+
+def _cache_get(key: str):
+    with _cache_lock:
+        entry = _cache.get(key)
+        if entry is None:
+            return None
+        when, value, ttl = entry
+        if time.time() - when > ttl:
+            _cache.pop(key, None)
+            return None
+        return value
+
+
+def _cache_set(key: str, value, ttl: float) -> None:
+    with _cache_lock:
+        _cache[key] = (time.time(), value, ttl)
+        if len(_cache) > 200:
+            for old in sorted(_cache, key=lambda k: _cache[k][0])[:50]:
+                _cache.pop(old, None)
 
 
 def steam_libraries() -> list[str]:
@@ -202,14 +259,14 @@ def fetch_details(ids: list[str]) -> list[dict]:
     items = payload.get("response", {}).get("publishedfiledetails", []) or []
     out = []
     for it in items:
-        if int(it.get("result", 0)) != 1:
+        if not isinstance(it, dict) or _int(it.get("result")) != 1:
             continue
         out.append(
             {
                 "fileid": str(it.get("publishedfileid")),
-                "appid": int(it.get("consumer_app_id") or it.get("creator_app_id") or 0),
+                "appid": _int(it.get("consumer_app_id") or it.get("creator_app_id")),
                 "title": (it.get("title") or "").strip() or f"Workshop {it.get('publishedfileid')}",
-                "size": int(it.get("file_size") or 0),
+                "size": _int(it.get("file_size")),
                 "thumb": it.get("preview_url") or "",
             }
         )
@@ -229,13 +286,219 @@ def fetch_collection(cid: str) -> list[str]:
         return []
 
     details = (payload.get("response", {}).get("collectiondetails") or [{}])[0]
-    if int(details.get("result", 0)) != 1:
+    if _int(details.get("result")) != 1:
         return []
     return [
         str(c.get("publishedfileid"))
         for c in details.get("children", [])
-        if c.get("publishedfileid")
+        if isinstance(c, dict) and c.get("publishedfileid")
     ]
+
+
+# --------------------------------------------------------------------------- #
+# Explorador del Workshop (navegar por los mods de un juego)
+#
+# La web del Workshop incluye los datos de la página dentro de
+# <script id="valve-ssr-data">, un JSON con cadenas JSON anidadas. Se lee ese
+# bloque para poder listar mods sin necesitar una clave de la Web API de Steam.
+# --------------------------------------------------------------------------- #
+
+SSR_RE = re.compile(
+    r'<script type="application/json" id="valve-ssr-data"[^>]*>(.*?)</script>',
+    re.S,
+)
+
+
+def _walk_json(node, depth: int = 0):
+    """Recorre un JSON con cadenas JSON dentro y devuelve los diccionarios."""
+    if depth > 40:
+        return
+    if isinstance(node, str):
+        if len(node) >= 2 and node[:1] in "{[" and node[-1:] in "}]":
+            try:
+                yield from _walk_json(json.loads(node), depth + 1)
+            except (ValueError, RecursionError):
+                pass
+        return
+    if isinstance(node, list):
+        for value in node:
+            yield from _walk_json(value, depth + 1)
+        return
+    if isinstance(node, dict):
+        yield node
+        for value in node.values():
+            yield from _walk_json(value, depth + 1)
+
+
+def _parse_ssr(html_text: str) -> tuple[dict | None, dict | None]:
+    """Devuelve (listado de mods, datos de la app) del HTML del Workshop."""
+    match = SSR_RE.search(html_text)
+    if not match:
+        return None, None
+    try:
+        root = json.loads(match.group(1))
+    except ValueError:
+        return None, None
+
+    listing = None
+    app = None
+    for node in _walk_json(root):
+        if listing is None and isinstance(node.get("results"), list) and "total_count" in node:
+            listing = node
+        app_node = node.get("app")
+        if app is None and isinstance(app_node, dict) and app_node.get("name"):
+            app = app_node
+        if listing is not None and app is not None:
+            break
+    return listing, app
+
+
+def _workshop_item(raw: dict) -> dict:
+    size = _int(raw.get("file_size"))
+    subscriptions = _int(raw.get("subscriptions"))
+    tags = []
+    for tag in raw.get("tags") or []:
+        if isinstance(tag, dict):
+            label = (tag.get("display_name") or tag.get("tag") or "").strip()
+            if label:
+                tags.append(label)
+    return {
+        "fileid": str(raw.get("publishedfileid") or ""),
+        "appid": _int(raw.get("consumer_appid")),
+        "title": (raw.get("title") or "").strip(),
+        "description": (raw.get("short_description") or "").strip(),
+        "thumb": raw.get("preview_url") or "",
+        "size": size,
+        "size_text": human_size(size) if size else "—",
+        "subscriptions": subscriptions,
+        "subscriptions_text": human_count(subscriptions),
+        "favorites": _int(raw.get("favorited")),
+        "stars": _int(raw.get("star_rating")),
+        "votes": _int(raw.get("total_votes")),
+        "tags": tags[:4],
+        "updated": _int(raw.get("time_updated")),
+    }
+
+
+def search_games(query: str) -> list[dict]:
+    query = (query or "").strip()
+    if len(query) < 2:
+        return []
+    cache_key = f"search:{query.lower()}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        r = requests.get(
+            SEARCH_APPS_URL + quote(query, safe=""),
+            headers={"User-Agent": USER_AGENT, "Accept-Language": "es-ES,es;q=0.9,en;q=0.8"},
+            timeout=20,
+        )
+        r.raise_for_status()
+        raw = r.json()
+    except Exception as exc:
+        raise UserError("No pude buscar juegos en Steam. Comprueba tu conexión.") from exc
+
+    games = []
+    if isinstance(raw, list):
+        for entry in raw[:20]:
+            if not isinstance(entry, dict):
+                continue
+            appid = str(entry.get("appid") or "").strip()
+            name = (entry.get("name") or "").strip()
+            if appid.isdigit() and name:
+                games.append(
+                    {
+                        "appid": appid,
+                        "name": name,
+                        "icon": entry.get("icon") or entry.get("logo") or "",
+                    }
+                )
+    _cache_set(cache_key, games, SEARCH_TTL)
+    return games
+
+
+def _empty_browse(appid: str, sort_key: str, page: int, app_name: str = "") -> dict:
+    return {
+        "appid": appid,
+        "game": {
+            "appid": appid,
+            "name": app_name,
+            "workshop_url": f"{COMMUNITY_BASE}/app/{appid}/workshop/",
+        },
+        "sort": "subs" if sort_key == BROWSE_SORTS["subs"] else "popular",
+        "page": 1,
+        "pages": 1,
+        "total": 0,
+        "items": [],
+        "no_workshop": True,
+    }
+
+
+def fetch_browse(appid: str, sort: str, page: int = 1) -> dict:
+    appid = str(appid or "").strip()
+    sort_key = BROWSE_SORTS.get(sort, BROWSE_SORTS["popular"])
+    page = max(1, min(_int(page, 1), MAX_BROWSE_PAGE))
+    cache_key = f"browse:{appid}:{sort_key}:{page}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        r = requests.get(
+            BROWSE_URL,
+            params={
+                "appid": appid,
+                "browsesort": sort_key,
+                "section": "readytouseitems",
+                "p": page,
+            },
+            headers={"User-Agent": USER_AGENT, "Accept-Language": "es-ES,es;q=0.9,en;q=0.8"},
+            timeout=30,
+        )
+    except Exception as exc:
+        raise UserError("No pude conectar con la web del Workshop de Steam.") from exc
+
+    if r.status_code >= 400:
+        # Juegos sin Workshop (o páginas de error de Steam): lista vacía.
+        data = _empty_browse(appid, sort_key, page)
+        _cache_set(cache_key, data, BROWSE_TTL)
+        return data
+
+    listing, app = _parse_ssr(r.text)
+    if listing is None:
+        data = _empty_browse(appid, sort_key, page, (app or {}).get("name") or "")
+        _cache_set(cache_key, data, BROWSE_TTL)
+        return data
+
+    items = []
+    for raw in listing.get("results") or []:
+        if not isinstance(raw, dict):
+            continue
+        # Solo mods sueltos (file_type 0), no colecciones ni guías.
+        if _int(raw.get("file_type")) != 0 or _int(raw.get("num_children")) > 0:
+            continue
+        item = _workshop_item(raw)
+        if item["fileid"] and item["title"]:
+            items.append(item)
+
+    data = {
+        "appid": appid,
+        "game": {
+            "appid": appid,
+            "name": (app or {}).get("name") or "",
+            "workshop_url": f"{COMMUNITY_BASE}/app/{appid}/workshop/",
+        },
+        "sort": "subs" if sort_key == BROWSE_SORTS["subs"] else "popular",
+        "page": _int(listing.get("current_page"), page),
+        "pages": _int(listing.get("total_pages"), 1),
+        "total": _int(listing.get("total_count"), len(items)),
+        "items": items,
+        "no_workshop": False,
+    }
+    _cache_set(cache_key, data, BROWSE_TTL)
+    return data
 
 
 # --------------------------------------------------------------------------- #
@@ -355,10 +618,6 @@ def forget_steam_account() -> None:
                 path.unlink(missing_ok=True)
         except Exception:
             pass
-    cfg = load_config()
-    if cfg.get("steam_user"):
-        cfg["steam_user"] = ""
-        save_config(cfg)
 
 
 # --------------------------------------------------------------------------- #
@@ -440,14 +699,29 @@ def _exec(job: "Job", cmd: list[str], timeout: int, on_line=None) -> tuple[int, 
 # DepotDownloader: instalación
 # --------------------------------------------------------------------------- #
 
+DD_VERSION_FILE = DD_DIR / ".version"
+
+
 def ensure_downloader(job: "Job") -> None:
     if DD_EXE.exists():
-        return
+        try:
+            marker = DD_VERSION_FILE.read_text("utf-8").strip()
+        except Exception:
+            marker = ""
+        if not marker:
+            # Instalación anterior a este control de versión: se da por buena.
+            try:
+                DD_VERSION_FILE.write_text(DD_VERSION, "utf-8")
+            except Exception:
+                pass
+            return
+        if marker == DD_VERSION:
+            return
 
     job.set(phase="preparando", message="Descargando DepotDownloader (solo la primera vez)…", percent=4)
     VENDOR_DIR.mkdir(parents=True, exist_ok=True)
-    DD_DIR.mkdir(parents=True, exist_ok=True)
     zip_path = VENDOR_DIR / "depotdownloader.zip"
+    tmp_dir = VENDOR_DIR / "depotdownloader.tmp"
 
     try:
         with requests.get(DD_ZIP_URL, stream=True, timeout=180) as r:
@@ -465,12 +739,26 @@ def ensure_downloader(job: "Job") -> None:
                             percent=4 + 18 * done / total,
                             message=f"Descargando DepotDownloader… {done * 100 // total}%",
                         )
+
+        # Se extrae en una carpeta temporal y solo se sustituye si el .exe está
+        # completo: así una descarga a medias no rompe la instalación existente.
+        shutil.rmtree(tmp_dir, ignore_errors=True)
         with zipfile.ZipFile(zip_path) as zf:
-            zf.extractall(DD_DIR)
+            zf.extractall(tmp_dir)
+        new_exe = tmp_dir / "DepotDownloader.exe"
+        if not new_exe.exists() or new_exe.stat().st_size < 1_000_000:
+            raise UserError("El paquete de DepotDownloader vino incompleto. Inténtalo de nuevo.")
+
+        shutil.rmtree(DD_DIR, ignore_errors=True)
+        tmp_dir.rename(DD_DIR)
+        DD_VERSION_FILE.write_text(DD_VERSION, "utf-8")
+    except UserError:
+        raise
     except Exception as exc:
         raise UserError(f"No pude descargar DepotDownloader: {exc}") from exc
     finally:
         zip_path.unlink(missing_ok=True)
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
     if not DD_EXE.exists():
         raise UserError("DepotDownloader no se instaló correctamente (falta el .exe).")
@@ -651,8 +939,44 @@ def _access_error(text: str) -> bool:
     return any(n.lower() in text.lower() for n in needles)
 
 
+def _promote(staging: Path, target: Path) -> None:
+    """Mueve la descarga terminada a su carpeta final sin perder la anterior."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.is_file():
+        target.unlink(missing_ok=True)
+
+    backup = None
+    if target.exists():
+        backup = target.with_name(f".{target.name}.old-{uuid.uuid4().hex[:6]}")
+        try:
+            target.rename(backup)
+        except OSError:
+            backup = None
+        if backup is None:
+            shutil.rmtree(target, ignore_errors=True)
+
+    try:
+        try:
+            os.replace(staging, target)
+        except OSError:
+            if target.exists():
+                shutil.rmtree(target, ignore_errors=True)
+            shutil.move(str(staging), str(target))
+    except Exception:
+        # Si no se pudo colocar la descarga, se restaura la copia anterior.
+        if backup is not None and backup.exists() and not target.exists():
+            try:
+                backup.rename(target)
+            except OSError:
+                pass
+        raise
+    else:
+        if backup is not None:
+            shutil.rmtree(backup, ignore_errors=True)
+
+
 def download_item(job: Job, item: dict, cfg: dict, base: float, span: float) -> None:
-    appid = int(item["appid"])
+    appid = _int(item.get("appid"))
     fileid = str(item["fileid"])
     title = item["title"]
     if not appid:
@@ -660,6 +984,9 @@ def download_item(job: Job, item: dict, cfg: dict, base: float, span: float) -> 
 
     folder_name = safe_name(title, fileid) if job.naming == "title" else safe_name(fileid)
     target = Path(job.dest) / folder_name
+    # Se descarga en una carpeta oculta aparte: la carpeta final solo se
+    # reemplaza cuando hay contenido, así un fallo no borra el mod anterior.
+    staging = target.with_name(f".{target.name}.part-{job.id}")
 
     user = current_steam_user()
     platforms: list[tuple[str, list[str]]] = []
@@ -668,63 +995,66 @@ def download_item(job: Job, item: dict, cfg: dict, base: float, span: float) -> 
     platforms.append(("anónimo", []))
 
     last_text = ""
-    for label, auth in platforms:
-        shutil.rmtree(target, ignore_errors=True)
-        target.mkdir(parents=True, exist_ok=True)
-        job.set(
-            phase="descargando",
-            indeterminate=True,
-            qr=None,
-            message=f"Conectando con Steam ({label})…",
-        )
+    try:
+        for label, auth in platforms:
+            shutil.rmtree(staging, ignore_errors=True)
+            staging.mkdir(parents=True, exist_ok=True)
+            job.set(
+                phase="descargando",
+                indeterminate=True,
+                qr=None,
+                message=f"Conectando con Steam ({label})…",
+            )
 
-        def on_line(line: str, _title=title) -> None:
-            job.log(line)
-            match = PROGRESS_RE.match(line)
-            if match:
-                pct = min(float(match.group(1)), 100.0)
-                job.set(
-                    indeterminate=False,
-                    percent=base + span * pct / 100.0,
-                    message=f"Descargando {_title}… {pct:.0f}%",
-                )
+            def on_line(line: str, _title=title) -> None:
+                job.log(line)
+                match = PROGRESS_RE.match(line)
+                if match:
+                    pct = min(float(match.group(1)), 100.0)
+                    job.set(
+                        indeterminate=False,
+                        percent=base + span * pct / 100.0,
+                        message=f"Descargando {_title}… {pct:.0f}%",
+                    )
+                    return
+                low = line.lower()
+                if "pre-allocating" in low or "downloading " in low or "validating " in low:
+                    name = line.split(" ", 1)[-1].strip()
+                    job.set(message=f"Descargando {_title}… {Path(name).name}")
+
+            args = [
+                str(DD_EXE),
+                "-app",
+                str(appid),
+                "-pubfile",
+                fileid,
+                "-dir",
+                str(staging),
+                "-max-downloads",
+                "6",
+                *auth,
+            ]
+            code, lines = _exec(job, args, timeout=7200, on_line=on_line)
+            last_text = "\n".join(lines)
+
+            if job.cancelled:
+                raise UserError("Descarga cancelada.")
+
+            if _has_payload(staging):
+                _clean_internal(staging)
+                _promote(staging, target)
+                job.folders.append(str(target))
                 return
-            low = line.lower()
-            if "pre-allocating" in low or "downloading " in low or "validating " in low:
-                name = line.split(" ", 1)[-1].strip()
-                job.set(message=f"Descargando {_title}… {Path(name).name}")
 
-        args = [
-            str(DD_EXE),
-            "-app",
-            str(appid),
-            "-pubfile",
-            fileid,
-            "-dir",
-            str(target),
-            "-max-downloads",
-            "6",
-            *auth,
-        ]
-        code, lines = _exec(job, args, timeout=7200, on_line=on_line)
-        last_text = "\n".join(lines)
+            _clean_internal(staging)
+            shutil.rmtree(staging, ignore_errors=True)
 
-        if job.cancelled:
-            shutil.rmtree(target, ignore_errors=True)
-            raise UserError("Descarga cancelada.")
-
-        if _has_payload(target):
-            _clean_internal(target)
-            job.folders.append(str(target))
-            return
-
-        _clean_internal(target)
-        shutil.rmtree(target, ignore_errors=True)
-
-        if code == -9:
-            raise UserError("La descarga tardó demasiado y se detuvo. Inténtalo de nuevo.")
-        if not _access_error(last_text):
-            break
+            if code == -9:
+                raise UserError("La descarga tardó demasiado y se detuvo. Inténtalo de nuevo.")
+            if not _access_error(last_text):
+                break
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
 
     low = last_text.lower()
     if "unsupported file type" in low:
@@ -864,10 +1194,6 @@ def run_login_job(job: Job) -> None:
                     "con la app de Steam antes de que caduque."
                 )
 
-            cfg = load_config()
-            cfg["steam_user"] = user
-            save_config(cfg)
-
             job.status = "done"
             job.phase = "Listo"
             job.percent = 100.0
@@ -892,6 +1218,21 @@ def run_login_job(job: Job) -> None:
 # --------------------------------------------------------------------------- #
 
 app = FastAPI(title="Steam Workshop Downloader", docs_url=None, redoc_url=None)
+
+LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
+
+@app.middleware("http")
+async def local_only(request, call_next):
+    """Evita que otra web abierta en el navegador use la app (CSRF local)."""
+    if request.method not in ("GET", "HEAD", "OPTIONS"):
+        origin = request.headers.get("origin")
+        if origin:
+            origin_host = (urlparse(origin).hostname or "").lower()
+            request_host = (request.headers.get("host") or "").rsplit(":", 1)[0].strip("[]").lower()
+            if origin_host not in LOCAL_HOSTS and origin_host != request_host:
+                return JSONResponse({"detail": "Origen no permitido."}, status_code=403)
+    return await call_next(request)
 
 
 class ResolveIn(BaseModel):
@@ -950,6 +1291,25 @@ def get_config():
     }
 
 
+@app.get("/api/games/search")
+def games_search(q: str = ""):
+    try:
+        return {"games": search_games(q)}
+    except UserError as exc:
+        raise HTTPException(502, str(exc)) from exc
+
+
+@app.get("/api/workshop")
+def workshop(appid: str = "", sort: str = "popular", page: int = 1):
+    appid = (appid or "").strip()
+    if not re.fullmatch(r"\d{1,10}", appid):
+        raise HTTPException(400, "Falta el ID del juego que quieres explorar.")
+    try:
+        return fetch_browse(appid, sort, page)
+    except UserError as exc:
+        raise HTTPException(502, str(exc)) from exc
+
+
 @app.post("/api/resolve")
 def resolve(body: ResolveIn):
     fid = parse_ref(body.input)
@@ -963,6 +1323,36 @@ def resolve(body: ResolveIn):
         raise HTTPException(400, "No reconozco el enlace. Pega la URL del mod o su ID numérico.")
 
     details = fetch_details([fid])
+    # Las colecciones también devuelven un file_size (el de su miniatura), así
+    # que primero se comprueba si es una colección y solo después un mod suelto.
+    children_all = fetch_collection(fid)
+    if children_all:
+        children = children_all[:MAX_COLLECTION_ITEMS]
+        items = fetch_details(children)
+        if not items:
+            raise HTTPException(404, "La colección está vacía o sus mods no son accesibles.")
+        total = sum(i["size"] for i in items)
+        return {
+            "kind": "collection",
+            "title": (details[0]["title"] if details else "") or "Colección del Workshop",
+            "count": len(items),
+            "total_children": len(children_all),
+            "truncated": len(children_all) > MAX_COLLECTION_ITEMS,
+            "limit": MAX_COLLECTION_ITEMS,
+            "total_size": total,
+            "total_size_text": human_size(total),
+            "items": [
+                {
+                    "fileid": i["fileid"],
+                    "appid": i["appid"],
+                    "title": i["title"],
+                    "size_text": human_size(i["size"]) if i["size"] else "—",
+                    "thumb": i["thumb"],
+                }
+                for i in items
+            ],
+        }
+
     if details and details[0]["size"] > 0:
         d = details[0]
         return {
@@ -979,31 +1369,6 @@ def resolve(body: ResolveIn):
                     "size_text": human_size(d["size"]) if d["size"] else "—",
                     "thumb": d["thumb"],
                 }
-            ],
-        }
-
-    children = fetch_collection(fid)
-    if children:
-        children = children[:MAX_COLLECTION_ITEMS]
-        items = fetch_details(children)
-        if not items:
-            raise HTTPException(404, "La colección está vacía o sus mods no son accesibles.")
-        total = sum(i["size"] for i in items)
-        return {
-            "kind": "collection",
-            "title": (details[0]["title"] if details else "") or "Colección del Workshop",
-            "count": len(items),
-            "total_size": total,
-            "total_size_text": human_size(total),
-            "items": [
-                {
-                    "fileid": i["fileid"],
-                    "appid": i["appid"],
-                    "title": i["title"],
-                    "size_text": human_size(i["size"]) if i["size"] else "—",
-                    "thumb": i["thumb"],
-                }
-                for i in items
             ],
         }
 
