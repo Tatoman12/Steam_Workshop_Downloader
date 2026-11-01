@@ -104,7 +104,7 @@
   }
   .wrap {
     width: 100%;
-    max-width: 880px; /* Ampliado un poco para dar aire */
+    max-width: 1400px;
     display: flex;
     flex-direction: column;
     gap: 18px;
@@ -311,6 +311,9 @@
   .stage {
     display: grid;
     grid-template-columns: 1.1fr 1fr; /* Ajustado para que la derecha tenga más espacio */
+    width: 100%;
+    max-width: 1040px;
+    align-self: center;
     background: var(--paper);
     border: 1px solid var(--rule);
     border-radius: var(--radius-xl);
@@ -850,6 +853,14 @@
   }
 
   .game-search { position: relative; }
+  .game-search-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .game-search-row .game-search { flex: 1 1 420px; }
+  .game-search-row .recent-games { flex: 0 1 auto; justify-content: flex-end; }
   .game-results {
     position: absolute;
     z-index: 30;
@@ -984,12 +995,14 @@
 
   .mod-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 10px;
   }
   .mod-card {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 108px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
     overflow: hidden;
     background: var(--paper);
     border: 1px solid var(--rule);
@@ -1006,23 +1019,26 @@
   }
   .mod-thumb {
     display: block;
-    width: 100%;
-    aspect-ratio: 16 / 9;
+    width: 108px;
+    height: 81px;
+    border-radius: 8px;
     object-fit: cover;
+    align-self: center;
     background: var(--bg-2);
   }
   .mod-body {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px 13px 13px;
+    gap: 5px;
+    padding: 0;
     flex: 1;
+    min-width: 0;
   }
   .mod-title {
     margin: 0;
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 600;
-    line-height: 1.35;
+    line-height: 1.3;
     color: var(--ink);
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -1031,23 +1047,23 @@
   }
   .mod-desc {
     margin: 0;
-    font-size: 11.5px;
-    line-height: 1.5;
+    font-size: 11px;
+    line-height: 1.45;
     color: var(--muted);
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
   .mod-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 4px;
     margin-top: auto;
   }
-  .mod-meta .badge { padding: 2px 6px; font-size: 10px; }
+  .mod-meta .badge { padding: 1px 5px; font-size: 9.5px; }
   .mod-actions { display: flex; gap: 6px; margin-top: 2px; }
-  .mod-actions .btn { flex: 1; padding: 8px 10px; font-size: 12px; }
+  .mod-actions .btn { flex: 1; padding: 7px 9px; font-size: 11.5px; }
   .mod-actions .btn.steam { flex: 0 0 auto; }
 
   .explore-empty {
@@ -1061,6 +1077,16 @@
   .mod-search { display: flex; gap: 6px; align-items: center; }
   .mod-search input { flex: 1; min-width: 0; }
   .mod-search .btn { flex: 0 0 auto; }
+
+  .explore-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .explore-toolbar .mod-search { flex: 1 1 280px; }
+  .explore-toolbar .sort-tabs { flex: 0 0 auto; }
+  .explore-hints { display: flex; flex-wrap: wrap; gap: 2px 14px; }
 
   .pager {
     display: flex;
@@ -1099,6 +1125,18 @@
   @media (max-width: 720px) {
     .stage { grid-template-columns: 1fr; }
     .stage-col-left { border-right: none; border-bottom: 1px solid var(--rule); }
+    .explore-toolbar .mod-search { flex-basis: 100%; }
+    .mod-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mod-card { display: flex; flex-direction: column; gap: 0; padding: 0; }
+    .mod-thumb {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      border-radius: 0;
+      align-self: auto;
+    }
+    .mod-body { padding: 9px; gap: 6px; }
+    .mod-desc { display: none; }
   }
   @media (max-width: 520px) {
     body { padding: 32px 14px 60px; }
@@ -1254,12 +1292,14 @@
       <span class="step">01</span>
       <span class="col-title">Elige un juego</span>
     </div>
-    <div class="game-search">
-      <input id="gameQuery" type="text" spellcheck="false" autocomplete="off"
-             placeholder="Busca un juego (p. ej. The Binding of Isaac: Rebirth)" />
-      <div id="gameResults" class="game-results hidden"></div>
+    <div class="game-search-row">
+      <div class="game-search">
+        <input id="gameQuery" type="text" spellcheck="false" autocomplete="off"
+               placeholder="Busca un juego (p. ej. The Binding of Isaac: Rebirth)" />
+        <div id="gameResults" class="game-results hidden"></div>
+      </div>
+      <div id="recentGames" class="recent-games hidden"></div>
     </div>
-    <div id="recentGames" class="recent-games hidden"></div>
 
     <div id="gameHeader" class="game-header hidden">
       <img id="gameIcon" alt="" referrerpolicy="no-referrer" />
@@ -1270,19 +1310,23 @@
       <a id="gameLink" class="btn ghost small" target="_blank" rel="noopener">Ver en Steam</a>
     </div>
 
-    <div id="modSearchWrap" class="mod-search hidden">
-      <input id="modQuery" type="text" spellcheck="false" autocomplete="off"
-             placeholder="Buscar mod por nombre o ID…" />
-      <button id="btnClearMod" class="btn ghost small hidden" type="button"
-              title="Limpiar búsqueda" aria-label="Limpiar búsqueda">✕</button>
-    </div>
-    <p id="searchNote" class="hint hidden"></p>
+    <div class="explore-toolbar">
+      <div id="modSearchWrap" class="mod-search hidden">
+        <input id="modQuery" type="text" spellcheck="false" autocomplete="off"
+               placeholder="Buscar mod por nombre o ID…" />
+        <button id="btnClearMod" class="btn ghost small hidden" type="button"
+                title="Limpiar búsqueda" aria-label="Limpiar búsqueda">✕</button>
+      </div>
 
-    <div id="sortTabs" class="sort-tabs hidden">
-      <button class="sort-tab active" data-sort="popular" type="button">★ Más populares</button>
-      <button class="sort-tab" data-sort="subs" type="button">↓ Más suscripciones</button>
+      <div id="sortTabs" class="sort-tabs hidden">
+        <button class="sort-tab active" data-sort="popular" type="button">★ Más populares</button>
+        <button class="sort-tab" data-sort="subs" type="button">↓ Más suscripciones</button>
+      </div>
     </div>
-    <p id="sortHint" class="hint hidden">Más populares = mejor valorados por estrellas · Más suscripciones = más instalados.</p>
+    <div class="explore-hints">
+      <p id="searchNote" class="hint hidden"></p>
+      <p id="sortHint" class="hint hidden">Más populares = mejor valorados por estrellas · Más suscripciones = más instalados.</p>
+    </div>
 
     <div id="modGrid" class="mod-grid"></div>
     <div id="exploreEmpty" class="explore-empty">Busca un juego para ver sus mods del Workshop.</div>
@@ -1875,7 +1919,7 @@
 
     card.innerHTML = `
       ${item.thumb
-        ? `<img class="mod-thumb" src="${esc(item.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
+        ? `<img class="mod-thumb" src="${esc(item.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.removeAttribute('src')">`
         : `<div class="mod-thumb"></div>`}
       <div class="mod-body">
         <p class="mod-title" title="${esc(data.title || item.title)}">${esc(data.title || item.title || "Mod")}</p>
@@ -1904,7 +1948,7 @@
 
     card.innerHTML = `
       ${thumb
-        ? `<img class="mod-thumb" src="${esc(thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
+        ? `<img class="mod-thumb" src="${esc(thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.removeAttribute('src')">`
         : `<div class="mod-thumb"></div>`}
       <div class="mod-body">
         <p class="mod-title" title="${esc(data.title)}">${esc(data.title || "Colección")}</p>
@@ -1940,7 +1984,7 @@
 
     card.innerHTML = `
       ${item.thumb
-        ? `<img class="mod-thumb" src="${esc(item.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
+        ? `<img class="mod-thumb" src="${esc(item.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.removeAttribute('src')">`
         : `<div class="mod-thumb"></div>`}
       <div class="mod-body">
         <p class="mod-title" title="${esc(item.title)}">${esc(item.title)}</p>
