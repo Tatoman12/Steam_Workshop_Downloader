@@ -436,24 +436,29 @@ def _empty_browse(appid: str, sort_key: str, page: int, app_name: str = "") -> d
     }
 
 
-def fetch_browse(appid: str, sort: str, page: int = 1) -> dict:
+def fetch_browse(appid: str, sort: str, page: int = 1, query: str = "") -> dict:
     appid = str(appid or "").strip()
     sort_key = BROWSE_SORTS.get(sort, BROWSE_SORTS["popular"])
     page = max(1, min(_int(page, 1), MAX_BROWSE_PAGE))
-    cache_key = f"browse:{appid}:{sort_key}:{page}"
+    query = (query or "").strip()[:120]
+    cache_key = f"browse:{appid}:{sort_key}:{page}:{query.lower()}"
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
 
+    params = {
+        "appid": appid,
+        "browsesort": sort_key,
+        "section": "readytouseitems",
+        "p": page,
+    }
+    if query:
+        params["searchtext"] = query
+
     try:
         r = requests.get(
             BROWSE_URL,
-            params={
-                "appid": appid,
-                "browsesort": sort_key,
-                "section": "readytouseitems",
-                "p": page,
-            },
+            params=params,
             headers={"User-Agent": USER_AGENT, "Accept-Language": "es-ES,es;q=0.9,en;q=0.8"},
             timeout=30,
         )
@@ -1300,12 +1305,12 @@ def games_search(q: str = ""):
 
 
 @app.get("/api/workshop")
-def workshop(appid: str = "", sort: str = "popular", page: int = 1):
+def workshop(appid: str = "", sort: str = "popular", page: int = 1, q: str = ""):
     appid = (appid or "").strip()
     if not re.fullmatch(r"\d{1,10}", appid):
         raise HTTPException(400, "Falta el ID del juego que quieres explorar.")
     try:
-        return fetch_browse(appid, sort, page)
+        return fetch_browse(appid, sort, page, q)
     except UserError as exc:
         raise HTTPException(502, str(exc)) from exc
 

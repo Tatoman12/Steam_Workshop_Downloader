@@ -116,8 +116,7 @@
   .wrap > * { animation: fade-up 0.5s var(--ease) backwards; }
   .wrap > header  { animation-delay: 0s; }
   .wrap > .stage  { animation-delay: 0.06s; }
-  .wrap > .account { animation-delay: 0.12s; }
-  .wrap > footer  { animation-delay: 0.18s; }
+  .wrap > footer  { animation-delay: 0.12s; }
 
   /* ------------------------- Header ------------------------- */
   header {
@@ -154,32 +153,101 @@
     gap: 8px;
     flex: 0 0 auto;
   }
-  .tag {
+  /* ------------------------- Menú de Steam ------------------------- */
+  .steam-menu { position: relative; }
+  .steam-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-family: var(--mono);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    color: var(--accent);
-    background: var(--accent-soft);
-    padding: 6px 10px;
+    gap: 7px;
+    height: 38px;
+    padding: 0 12px;
     border-radius: var(--radius-xs);
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    flex: 0 0 auto;
+    transition:
+      background-color 0.25s var(--ease),
+      border-color 0.25s var(--ease),
+      color 0.25s var(--ease),
+      transform 0.2s var(--ease-spring);
+  }
+  .steam-btn:hover { background: var(--bg); border-color: var(--rule-2); color: var(--ink); }
+  .steam-btn:active { transform: scale(0.97); }
+  .steam-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .steam-btn.connected { border-color: var(--ok); }
+  .steam-btn svg { width: 15px; height: 15px; fill: currentColor; flex: 0 0 auto; }
+  #steamBtnLabel {
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
-    transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
   }
-  .tag::before {
-    content: "";
-    width: 5px; height: 5px;
+  .steam-dot {
+    width: 7px; height: 7px;
     border-radius: 50%;
-    background: var(--accent);
-    animation: pulse 2s ease-in-out infinite;
+    background: var(--muted-2);
+    flex: 0 0 auto;
+    transition: background-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
   }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.4; }
+  .steam-dot.ok { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
+
+  .steam-pop {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+    width: 360px;
+    max-width: calc(100vw - 28px);
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    background: var(--paper);
+    border: 1px solid var(--rule-2);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow:
+      0 24px 60px -24px rgba(0, 0, 0, 0.45),
+      0 4px 12px -4px rgba(0, 0, 0, 0.12);
+    animation: pop-in 0.18s var(--ease);
   }
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+  }
+  .steam-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .steam-pop-head .eyebrow { margin: 0; }
+  .pop-close {
+    width: 28px; height: 28px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .pop-close:hover { background: var(--bg); color: var(--ink); }
+  .steam-pop-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .steam-pop .login-box {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 12px;
+  }
+  .steam-pop #qrCanvas {
+    width: 170px; height: 170px;
+    align-self: center;
+    padding: 6px;
+  }
+  .steam-pop .login-info { min-width: 0; }
+  .steam-pop .login-steps { font-size: 12px; }
 
   /* ------------------------- Theme toggle ------------------------- */
   .theme-toggle {
@@ -252,8 +320,7 @@
       0 16px 40px -16px rgba(0, 0, 0, 0.1);
     transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease);
   }
-  [data-theme="dark"] .stage,
-  [data-theme="dark"] .account {
+  [data-theme="dark"] .stage {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.03),
       0 16px 40px -16px rgba(0, 0, 0, 0.5);
@@ -608,30 +675,7 @@
   }
   .hidden { display: none !important; }
 
-  /* ------------------------- Account card ------------------------- */
-  .account {
-    background: var(--paper);
-    border: 1px solid var(--rule);
-    border-radius: var(--radius-lg);
-    padding: 18px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.03),
-      0 8px 24px -12px rgba(0, 0, 0, 0.06);
-    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease);
-  }
-  .account-head { display: flex; gap: 14px; align-items: center; }
-  .steam-ico {
-    width: 40px; height: 40px; flex: 0 0 40px;
-    border-radius: var(--radius-sm);
-    display: grid; place-items: center;
-    background: var(--bg-2);
-    border: 1px solid var(--rule);
-    transition: background-color 0.35s var(--ease), border-color 0.35s var(--ease);
-  }
-  .steam-ico svg { width: 20px; height: 20px; fill: var(--ink-2); transition: fill 0.35s var(--ease); }
+  /* ------------------------- Cuenta / login ------------------------- */
   .eyebrow {
     font-family: var(--mono);
     font-size: 10px;
@@ -1014,7 +1058,42 @@
     border: 1px dashed var(--rule-2);
     border-radius: var(--radius);
   }
-  .explore-foot { display: flex; justify-content: center; }
+  .mod-search { display: flex; gap: 6px; align-items: center; }
+  .mod-search input { flex: 1; min-width: 0; }
+  .mod-search .btn { flex: 0 0 auto; }
+
+  .pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding-top: 4px;
+  }
+  .page-btn {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 9px;
+    border: 1px solid var(--rule-2);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 0.2s var(--ease),
+      border-color 0.2s var(--ease),
+      color 0.2s var(--ease);
+  }
+  .page-btn:hover:not(:disabled) { border-color: var(--ink-2); color: var(--ink); }
+  .page-btn.active { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .page-btn:disabled { opacity: 0.35; cursor: default; }
+  .page-btn.nav { font-size: 16px; }
+  .page-gap { color: var(--muted); padding: 0 2px; }
+  .page-info { width: 100%; text-align: center; font-size: 11.5px; color: var(--muted); }
+  .mod-grid { scroll-margin-top: 20px; }
 
   /* ------------------------- Responsive ------------------------- */
   @media (max-width: 720px) {
@@ -1033,7 +1112,6 @@
     #qrCanvas { width: 180px; height: 180px; }
     .btn { padding: 11px 15px; }
     .btn.primary { padding: 13px 18px; }
-    .account { padding: 16px 18px; }
     .explore { padding: 16px; }
     .mod-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
     .mod-desc { display: none; }
@@ -1041,9 +1119,10 @@
     .mod-actions .btn { padding: 7px 8px; font-size: 11px; }
     .game-header { flex-wrap: wrap; }
     .game-header .btn { margin-left: 60px; }
-  }
-  @media (max-width: 420px) {
-    .tag { display: none; }
+    #steamBtnLabel { display: none; }
+    .steam-btn { padding: 0 10px; }
+    .steam-pop { right: -46px; }
+    .page-btn { min-width: 30px; height: 30px; padding: 0 7px; font-size: 11.5px; }
   }
 </style>
 </head>
@@ -1061,7 +1140,41 @@
       <h1>Steam Workshop Downloader</h1>
     </div>
     <div class="head-actions">
-      <span class="tag">LOCAL</span>
+      <div class="steam-menu" id="steamMenu">
+        <button id="steamBtn" class="steam-btn" type="button" aria-haspopup="dialog" aria-expanded="false">
+          <span class="steam-dot" id="steamDot"></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M11.98 2a10 10 0 0 0-9.96 9.1l5.35 2.22a2.83 2.83 0 0 1 1.6-.49h.15l2.38-3.45v-.05a3.78 3.78 0 1 1 3.78 3.78h-.09l-3.4 2.43v.12a2.84 2.84 0 0 1-5.63.57L2.2 14.6A10 10 0 1 0 11.98 2Zm-4.22 15.2-1.2-.5a2.13 2.13 0 0 0 3.9-.9 2.13 2.13 0 0 0-2.9-1.97l1.24.52a1.57 1.57 0 1 1-1.24 2.87l.2-.02Zm10.1-7.6a2.52 2.52 0 1 1-5.04 0 2.52 2.52 0 0 1 5.04 0Zm-4.4 0a1.89 1.89 0 1 0 3.78 0 1.89 1.89 0 0 0-3.78 0Z"/>
+          </svg>
+          <span id="steamBtnLabel">Steam</span>
+        </button>
+
+        <div id="steamPop" class="steam-pop hidden" role="dialog" aria-label="Cuenta de Steam">
+          <div class="steam-pop-head">
+            <span class="eyebrow">Cuenta de Steam</span>
+            <button id="steamClose" class="pop-close" type="button" aria-label="Cerrar">×</button>
+          </div>
+          <div class="account-status" id="accountStatus"><span class="dot"></span> No conectada · solo hace falta para juegos de pago</div>
+          <div class="steam-pop-actions">
+            <button id="btnConnect" class="btn steam">Conectar con Steam</button>
+            <button id="btnLogout" class="btn ghost small hidden">Desconectar</button>
+          </div>
+          <div id="loginBox" class="login-box hidden">
+            <canvas id="qrCanvas" width="200" height="200"></canvas>
+            <div class="login-info">
+              <p class="login-title">Escanea con la app de Steam</p>
+              <ol class="login-steps">
+                <li>Abre <b>Steam</b> en tu móvil</li>
+                <li>Entra en <b>Steam Guard → Iniciar sesión con QR</b></li>
+                <li>Apunta la cámara a este código</li>
+              </ol>
+              <p class="hint" id="loginMsg">Generando código…</p>
+              <button id="btnCancelLogin" class="btn ghost small" style="align-self:flex-start;">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <button id="themeToggle" class="theme-toggle" type="button"
               aria-label="Cambiar tema claro/oscuro" title="Cambiar tema claro/oscuro">
         <span class="theme-toggle-icons">
@@ -1157,6 +1270,14 @@
       <a id="gameLink" class="btn ghost small" target="_blank" rel="noopener">Ver en Steam</a>
     </div>
 
+    <div id="modSearchWrap" class="mod-search hidden">
+      <input id="modQuery" type="text" spellcheck="false" autocomplete="off"
+             placeholder="Buscar mod por nombre o ID…" />
+      <button id="btnClearMod" class="btn ghost small hidden" type="button"
+              title="Limpiar búsqueda" aria-label="Limpiar búsqueda">✕</button>
+    </div>
+    <p id="searchNote" class="hint hidden"></p>
+
     <div id="sortTabs" class="sort-tabs hidden">
       <button class="sort-tab active" data-sort="popular" type="button">★ Más populares</button>
       <button class="sort-tab" data-sort="subs" type="button">↓ Más suscripciones</button>
@@ -1165,40 +1286,8 @@
 
     <div id="modGrid" class="mod-grid"></div>
     <div id="exploreEmpty" class="explore-empty">Busca un juego para ver sus mods del Workshop.</div>
-    <div id="exploreFoot" class="explore-foot hidden">
-      <button id="btnMore" class="btn ghost" type="button">Cargar más mods</button>
-    </div>
+    <nav id="pager" class="pager hidden" aria-label="Paginación de mods"></nav>
     <div id="exploreError" class="alert hidden"></div>
-  </section>
-
-  <section class="account" id="accountCard">
-    <div class="account-head">
-      <div class="steam-ico">
-        <svg viewBox="0 0 24 24">
-          <path d="M11.98 2a10 10 0 0 0-9.96 9.1l5.35 2.22a2.83 2.83 0 0 1 1.6-.49h.15l2.38-3.45v-.05a3.78 3.78 0 1 1 3.78 3.78h-.09l-3.4 2.43v.12a2.84 2.84 0 0 1-5.63.57L2.2 14.6A10 10 0 1 0 11.98 2Zm-4.22 15.2-1.2-.5a2.13 2.13 0 0 0 3.9-.9 2.13 2.13 0 0 0-2.9-1.97l1.24.52a1.57 1.57 0 1 1-1.24 2.87l.2-.02Zm10.1-7.6a2.52 2.52 0 1 1-5.04 0 2.52 2.52 0 0 1 5.04 0Zm-4.4 0a1.89 1.89 0 1 0 3.78 0 1.89 1.89 0 0 0-3.78 0Z"/>
-        </svg>
-      </div>
-      <div style="flex:1; min-width:0;">
-        <div class="eyebrow">Cuenta de Steam</div>
-        <div class="account-status" id="accountStatus"><span class="dot"></span> No conectada · solo hace falta para juegos de pago</div>
-      </div>
-      <button id="btnConnect" class="btn steam">Conectar con Steam</button>
-      <button id="btnLogout" class="btn ghost small hidden">Desconectar</button>
-    </div>
-
-    <div id="loginBox" class="login-box hidden">
-      <canvas id="qrCanvas" width="200" height="200"></canvas>
-      <div class="login-info">
-        <p class="login-title">Escanea con la app de Steam</p>
-        <ol class="login-steps">
-          <li>Abre <b>Steam</b> en tu móvil</li>
-          <li>Entra en <b>Steam Guard → Iniciar sesión con QR</b></li>
-          <li>Apunta la cámara a este código</li>
-        </ol>
-        <p class="hint" id="loginMsg">Generando código…</p>
-        <button id="btnCancelLogin" class="btn ghost small" style="align-self:flex-start;">Cancelar</button>
-      </div>
-    </div>
   </section>
 
   <footer>
@@ -1213,8 +1302,9 @@
   const state = {
     resolved: null, jobId: null, loginJobId: null, running: false,
     retryAfterLogin: false, cfg: null, steam: null, timer: null, loginTimer: null,
-    game: null, gameSort: "popular", modPage: 0, modPages: 1, modTotal: 0,
-    modLoading: false, modReq: 0, gameTimer: null, lastFolder: "",
+    game: null, gameSort: "popular", modPage: 1, modPages: 1, modTotal: 0,
+    modLoading: false, modReq: 0, modQuery: "", modIdSearch: false,
+    gameTimer: null, modTimer: null, lastFolder: "",
   };
 
   const urlInput = $("url");
@@ -1244,6 +1334,12 @@
   const loginMsg = $("loginMsg");
   const qrCanvas = $("qrCanvas");
   const themeToggle = $("themeToggle");
+  const steamMenu = $("steamMenu");
+  const steamBtn = $("steamBtn");
+  const steamPop = $("steamPop");
+  const steamClose = $("steamClose");
+  const steamBtnLabel = $("steamBtnLabel");
+  const steamDot = $("steamDot");
 
   /* Explorador */
   const tabDownload = $("tabDownload");
@@ -1262,9 +1358,12 @@
   const sortHint = $("sortHint");
   const modGrid = $("modGrid");
   const exploreEmpty = $("exploreEmpty");
-  const exploreFoot = $("exploreFoot");
   const exploreError = $("exploreError");
-  const btnMore = $("btnMore");
+  const modSearchWrap = $("modSearchWrap");
+  const modQuery = $("modQuery");
+  const btnClearMod = $("btnClearMod");
+  const searchNote = $("searchNote");
+  const pager = $("pager");
 
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => (
     { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
@@ -1349,11 +1448,34 @@
       status.innerHTML = `<span class="dot ok"></span> Conectado como <b>${esc(steam.user)}</b>`;
       btnConnect.classList.add("hidden");
       btnLogout.classList.remove("hidden");
+      steamBtnLabel.textContent = steam.user;
+      steamBtn.title = `Steam: ${steam.user}`;
+      steamBtn.classList.add("connected");
+      steamDot.classList.add("ok");
     } else {
       status.innerHTML = `<span class="dot"></span> No conectada · solo hace falta para juegos de pago`;
       btnConnect.classList.remove("hidden");
       btnLogout.classList.add("hidden");
+      steamBtnLabel.textContent = "Conectar Steam";
+      steamBtn.title = "Conectar con Steam";
+      steamBtn.classList.remove("connected");
+      steamDot.classList.remove("ok");
     }
+  }
+
+  function openSteamPop() {
+    steamPop.classList.remove("hidden");
+    steamBtn.setAttribute("aria-expanded", "true");
+  }
+
+  function closeSteamPop() {
+    steamPop.classList.add("hidden");
+    steamBtn.setAttribute("aria-expanded", "false");
+  }
+
+  function toggleSteamPop() {
+    if (steamPop.classList.contains("hidden")) openSteamPop();
+    else closeSteamPop();
   }
 
   async function refreshSteam() {
@@ -1542,9 +1664,20 @@
     gameLink.href = `https://steamcommunity.com/app/${state.game.appid}/workshop/`;
     sortTabs.classList.remove("hidden");
     sortHint.classList.remove("hidden");
-    state.modPage = 0;
+    modSearchWrap.classList.remove("hidden");
+
+    // Al cambiar de juego se limpia la búsqueda de mods.
+    state.modQuery = "";
+    state.modIdSearch = false;
+    modQuery.value = "";
+    btnClearMod.classList.add("hidden");
+    searchNote.classList.add("hidden");
+    searchNote.textContent = "";
+
+    state.modPage = 1;
     state.modPages = 1;
     modGrid.innerHTML = "";
+    pager.classList.add("hidden");
     await loadMods(true);
   }
 
@@ -1553,36 +1686,67 @@
     exploreError.classList.toggle("hidden", !msg);
   }
 
-  async function loadMods(reset) {
+  function renderPager() {
+    const total = Math.max(1, state.modPages);
+    const cur = Math.max(1, state.modPage);
+    if (total <= 1) {
+      pager.classList.add("hidden");
+      pager.innerHTML = "";
+      return;
+    }
+
+    // Primera, última y una ventana de ±2 alrededor de la página actual.
+    const pages = new Set([1, total]);
+    for (let n = Math.max(1, cur - 2); n <= Math.min(total, cur + 2); n += 1) {
+      pages.add(n);
+    }
+    const list = [...pages].sort((a, b) => a - b);
+
+    let html = `<button class="page-btn nav" type="button" data-page="${cur - 1}" ${cur <= 1 ? "disabled" : ""} aria-label="Página anterior">‹</button>`;
+    let prev = 0;
+    list.forEach((n) => {
+      if (prev && n - prev > 1) html += `<span class="page-gap">…</span>`;
+      html += `<button class="page-btn ${n === cur ? "active" : ""}" type="button" data-page="${n}" ${n === cur ? 'aria-current="page"' : ""}>${n}</button>`;
+      prev = n;
+    });
+    html += `<button class="page-btn nav" type="button" data-page="${cur + 1}" ${cur >= total ? "disabled" : ""} aria-label="Página siguiente">›</button>`;
+    html += `<span class="page-info">Página ${cur} de ${total}</span>`;
+
+    pager.innerHTML = html;
+    pager.classList.remove("hidden");
+  }
+
+  async function loadMods(reset, targetPage) {
     if (!state.game) return;
-    if (!reset && (state.modLoading || state.modPage >= state.modPages)) return;
+    if (!reset && state.modLoading) return;
 
     if (reset) {
       // Invalida cualquier petición anterior que aún esté en vuelo.
       state.modReq += 1;
-      state.modPage = 0;
+      state.modPage = targetPage || 1;
       state.modPages = 1;
       modGrid.innerHTML = `<div class="explore-empty" style="grid-column:1/-1;">Cargando mods…</div>`;
-      exploreFoot.classList.add("hidden");
+      pager.classList.add("hidden");
       exploreEmpty.classList.add("hidden");
     }
 
     const req = state.modReq;
-    const page = state.modPage + 1;
+    const page = state.modPage;
     state.modLoading = true;
     showExploreError("");
-    btnMore.disabled = true;
-    btnMore.textContent = "Cargando…";
 
     try {
+      const query = state.modQuery
+        ? `&q=${encodeURIComponent(state.modQuery)}`
+        : "";
       const r = await fetch(
-        `/api/workshop?appid=${encodeURIComponent(state.game.appid)}&sort=${state.gameSort}&page=${page}`
+        `/api/workshop?appid=${encodeURIComponent(state.game.appid)}&sort=${state.gameSort}&page=${page}${query}`
       );
       const data = await r.json();
       if (req !== state.modReq) return; // Llegó tarde: ya hay otra búsqueda.
       if (!r.ok) throw new Error(data.detail || "No pude leer el Workshop.");
 
-      if (reset) modGrid.innerHTML = "";
+      modGrid.innerHTML = "";
       state.modPage = Number(data.page) || page;
       state.modPages = Math.max(1, Number(data.pages) || 1);
       state.modTotal = Number(data.total) || 0;
@@ -1591,16 +1755,28 @@
         state.game.name = data.game.name;
         gameName.textContent = data.game.name;
       }
-      gameMeta.textContent =
-        `${state.modTotal.toLocaleString("es-ES")} mods · App ${state.game.appid}`;
+      const totalText = state.modTotal.toLocaleString("es-ES");
+      gameMeta.textContent = state.modQuery
+        ? `${totalText} resultados · App ${state.game.appid}`
+        : `${totalText} mods · App ${state.game.appid}`;
+
+      if (state.modQuery) {
+        searchNote.textContent = state.modTotal
+          ? `${totalText} resultado${state.modTotal === 1 ? "" : "s"} para «${state.modQuery}»`
+          : `Sin resultados para «${state.modQuery}»`;
+        searchNote.classList.remove("hidden");
+      } else {
+        searchNote.textContent = "";
+        searchNote.classList.add("hidden");
+      }
 
       if (!data.items.length) {
-        if (reset) {
-          exploreEmpty.textContent = state.modTotal
-            ? "No hay más mods en esta categoría."
+        exploreEmpty.textContent = state.modQuery
+          ? "Ningún mod coincide con la búsqueda."
+          : state.modTotal
+            ? "No hay mods en esta página."
             : "Este juego no tiene Workshop (o no se pudo leer).";
-          exploreEmpty.classList.remove("hidden");
-        }
+        exploreEmpty.classList.remove("hidden");
       } else {
         exploreEmpty.classList.add("hidden");
         const frag = document.createDocumentFragment();
@@ -1608,20 +1784,140 @@
         modGrid.appendChild(frag);
       }
 
-      const hasMore = state.modPage < state.modPages && state.modPage < 50;
-      exploreFoot.classList.toggle("hidden", !hasMore);
+      renderPager();
     } catch (e) {
       if (req === state.modReq) {
-        if (reset) modGrid.innerHTML = "";
+        modGrid.innerHTML = "";
         showExploreError(e.message);
       }
     } finally {
-      if (req === state.modReq) {
-        state.modLoading = false;
-        btnMore.disabled = false;
-        btnMore.textContent = "Cargar más mods";
-      }
+      if (req === state.modReq) state.modLoading = false;
     }
+  }
+
+  async function runModSearch(term) {
+    const query = (term || "").trim();
+    state.modQuery = query;
+    btnClearMod.classList.toggle("hidden", !query);
+    searchNote.classList.toggle("hidden", !query);
+
+    if (!query) {
+      state.modIdSearch = false;
+      searchNote.textContent = "";
+      await loadMods(true);
+      return;
+    }
+
+    // Un ID o una URL del Workshop se resuelven directamente.
+    const id = parseId(query);
+    if (id) {
+      state.modIdSearch = true;
+      await showModById(id);
+      return;
+    }
+
+    state.modIdSearch = false;
+    searchNote.textContent = `Buscando «${query}»…`;
+    await loadMods(true);
+  }
+
+  async function showModById(id) {
+    state.modReq += 1;
+    const req = state.modReq;
+    state.modLoading = true;
+    state.modPage = 1;
+    state.modPages = 1;
+    modGrid.innerHTML = `<div class="explore-empty" style="grid-column:1/-1;">Buscando el mod ${esc(id)}…</div>`;
+    pager.classList.add("hidden");
+    exploreEmpty.classList.add("hidden");
+    showExploreError("");
+    searchNote.textContent = `Buscando el ID ${id}…`;
+
+    try {
+      const r = await fetch("/api/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: id }),
+      });
+      const data = await r.json();
+      if (req !== state.modReq) return;
+      if (!r.ok) throw new Error(data.detail || "No encontré ese mod.");
+
+      modGrid.innerHTML = "";
+      if (data.kind === "collection") {
+        modGrid.appendChild(collectionCard(data, id));
+        searchNote.textContent = `Colección encontrada · ${data.count} mods`;
+      } else {
+        modGrid.appendChild(directCard(data));
+        searchNote.textContent = "Resultado directo por ID";
+      }
+    } catch (e) {
+      if (req !== state.modReq) return;
+      modGrid.innerHTML = "";
+      exploreEmpty.textContent = e.message;
+      exploreEmpty.classList.remove("hidden");
+      searchNote.textContent = "";
+    } finally {
+      if (req === state.modReq) state.modLoading = false;
+    }
+  }
+
+  function directCard(data) {
+    const item = (data.items && data.items[0]) || {};
+    const card = document.createElement("article");
+    card.className = "mod-card";
+
+    const badges = [
+      `<span class="badge blue">Mod individual</span>`,
+      item.appid ? `<span class="badge">App ${esc(item.appid)}</span>` : "",
+      data.total_size_text ? `<span class="badge">${esc(data.total_size_text)}</span>` : "",
+    ].join("");
+
+    card.innerHTML = `
+      ${item.thumb
+        ? `<img class="mod-thumb" src="${esc(item.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
+        : `<div class="mod-thumb"></div>`}
+      <div class="mod-body">
+        <p class="mod-title" title="${esc(data.title || item.title)}">${esc(data.title || item.title || "Mod")}</p>
+        <div class="mod-meta">${badges}</div>
+        <div class="mod-actions">
+          <button class="btn primary" type="button">Descargar</button>
+          <a class="btn ghost steam" href="https://steamcommunity.com/sharedfiles/filedetails/?id=${encodeURIComponent(item.fileid)}"
+             target="_blank" rel="noopener" title="Abrir en Steam">↗</a>
+        </div>
+      </div>`;
+
+    card.querySelector("button").addEventListener("click", () => downloadFromCard(item.fileid));
+    return card;
+  }
+
+  function collectionCard(data, id) {
+    const thumb = (data.items && data.items[0] && data.items[0].thumb) || "";
+    const card = document.createElement("article");
+    card.className = "mod-card";
+
+    const badges = [
+      `<span class="badge blue">Colección · ${esc(data.count)} mods</span>`,
+      data.total_size_text ? `<span class="badge">${esc(data.total_size_text)}</span>` : "",
+      data.truncated ? `<span class="badge">Límite ${esc(data.limit)}</span>` : "",
+    ].join("");
+
+    card.innerHTML = `
+      ${thumb
+        ? `<img class="mod-thumb" src="${esc(thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
+        : `<div class="mod-thumb"></div>`}
+      <div class="mod-body">
+        <p class="mod-title" title="${esc(data.title)}">${esc(data.title || "Colección")}</p>
+        <div class="mod-meta">${badges}</div>
+        <div class="mod-actions">
+          <button class="btn primary" type="button">Descargar colección</button>
+          <a class="btn ghost steam" href="https://steamcommunity.com/sharedfiles/filedetails/?id=${encodeURIComponent(id)}"
+             target="_blank" rel="noopener" title="Abrir en Steam">↗</a>
+        </div>
+      </div>`;
+
+    card.querySelector("button").addEventListener("click", () => downloadFromCard(id));
+    return card;
   }
 
   function modCard(item) {
@@ -1776,11 +2072,11 @@
   async function startLogin(retryDownload) {
     if (state.loginJobId) return;
     state.retryAfterLogin = !!retryDownload;
+    openSteamPop();
     loginBox.classList.remove("hidden");
     loginMsg.textContent = "Generando código QR…";
     qrCanvas.classList.add("hidden");
     btnConnect.disabled = true;
-    $("accountCard").scrollIntoView({ behavior: "smooth", block: "center" });
 
     try {
       const r = await fetch("/api/steam/login", { method: "POST" });
@@ -1949,6 +2245,16 @@
     await refreshSteam();
   });
 
+  /* --------------------------- Menú de Steam --------------------------- */
+  steamBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleSteamPop();
+  });
+  steamClose.addEventListener("click", closeSteamPop);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeSteamPop();
+  });
+
   /* --------------------------- Explorador: eventos --------------------------- */
   tabDownload.addEventListener("click", () => switchView("download"));
   tabExplore.addEventListener("click", () => switchView("explore"));
@@ -1975,6 +2281,7 @@
     if (!gameResults.contains(e.target) && e.target !== gameQuery) {
       gameResults.classList.add("hidden");
     }
+    if (!steamMenu.contains(e.target)) closeSteamPop();
   });
 
   sortTabs.addEventListener("click", (e) => {
@@ -1986,13 +2293,52 @@
     sortTabs.querySelectorAll(".sort-tab").forEach((b) => {
       b.classList.toggle("active", b === btn);
     });
-    state.modPage = 0;
-    state.modPages = 1;
-    modGrid.innerHTML = "";
+    // Un resultado directo por ID no se puede ordenar: se vuelve al listado.
+    if (state.modIdSearch) {
+      state.modIdSearch = false;
+      state.modQuery = "";
+      modQuery.value = "";
+      btnClearMod.classList.add("hidden");
+      searchNote.classList.add("hidden");
+    }
     loadMods(true);
   });
 
-  btnMore.addEventListener("click", () => loadMods(false));
+  pager.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-page]");
+    if (!btn || btn.disabled) return;
+    const n = Number(btn.dataset.page);
+    if (!n || n === state.modPage) return;
+    loadMods(true, n);
+    modGrid.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  /* --------------------------- Búsqueda de mods --------------------------- */
+  modQuery.addEventListener("input", () => {
+    clearTimeout(state.modTimer);
+    const term = modQuery.value;
+    state.modTimer = setTimeout(() => runModSearch(term), 450);
+  });
+
+  modQuery.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      modQuery.value = "";
+      clearTimeout(state.modTimer);
+      runModSearch("");
+      return;
+    }
+    if (e.key === "Enter") {
+      clearTimeout(state.modTimer);
+      runModSearch(modQuery.value);
+    }
+  });
+
+  btnClearMod.addEventListener("click", () => {
+    modQuery.value = "";
+    clearTimeout(state.modTimer);
+    runModSearch("");
+    modQuery.focus();
+  });
 
   renderRecentGames();
   loadConfig();

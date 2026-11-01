@@ -25,8 +25,13 @@ python app.py
 En la pestaña **Explorar Workshop** puedes buscar un juego por su nombre y ver
 sus mods sin salir de la app:
 
+- **Buscador de mods**: escribe el nombre de un mod para filtrar los resultados
+  del juego, o pega su ID/URL para abrirlo directamente. Los resultados también
+  se pueden ordenar y paginar.
 - **Más populares**: ordenados por estrellas (mejor valorados).
 - **Más suscripciones**: ordenados por número de suscriptores.
+- **Paginación**: navega con los botones de página (primera, última y las
+  cercanas a la actual) en lugar de cargar la lista de golpe.
 
 Cada tarjeta muestra miniatura, título, descripción corta, valoración,
 suscriptores, tamaño y etiquetas. El botón **Descargar** lleva el mod a la
@@ -40,9 +45,10 @@ para no pedir la misma página dos veces.
 ## Iniciar sesión con Steam (opcional)
 
 La mayoría de mods se descargan de forma anónima. Si el mod es de un juego de pago,
-pulsa **Conectar con Steam**:
+pulsa el botón **Steam** de la cabecera (muestra el estado de la cuenta) y elige
+**Conectar con Steam**:
 
-1. Aparece un **código QR** en la app.
+1. Aparece un **código QR** en el desplegable de la cabecera.
 2. Abre **Steam** en el móvil → **Steam Guard → Iniciar sesión con QR**.
 3. Apunta la cámara al código.
 
@@ -64,8 +70,9 @@ Si no tienes la app móvil de Steam, los mods de juegos de pago no se pueden baj
   También extrae solo los archivos reales del mod (`.bin` de contenido antiguo).
 - Permite iniciar sesión escaneando un QR con la app oficial de Steam y reutiliza
   ese token en las siguientes descargas.
-- Navega por el Workshop de cualquier juego (populares y más suscritos) leyendo
-  los datos públicos de la web de Steam, sin clave de API.
+- Navega por el Workshop de cualquier juego (populares, más suscritos, búsqueda
+  por nombre o ID y paginación) leyendo los datos públicos de la web de Steam,
+  sin clave de API.
 
 ## Notas
 
