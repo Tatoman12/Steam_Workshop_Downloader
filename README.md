@@ -45,10 +45,10 @@ para no pedir la misma página dos veces.
 ## Iniciar sesión con Steam (opcional)
 
 La mayoría de mods se descargan de forma anónima. Si el mod es de un juego de pago,
-pulsa el botón **Steam** de la barra superior (muestra el estado de la cuenta) y elige
+pulsa el botón **Steam** de la barra lateral (muestra el estado de la cuenta) y elige
 **Conectar con Steam**:
 
-1. Aparece un **código QR** en el desplegable de la barra superior.
+1. Aparece un **código QR** en el desplegable de la barra lateral.
 2. Abre **Steam** en el móvil → **Steam Guard → Iniciar sesión con QR**.
 3. Apunta la cámara al código.
 
