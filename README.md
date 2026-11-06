@@ -30,6 +30,7 @@ sus mods sin salir de la app:
   se pueden ordenar y paginar.
 - **Más populares**: ordenados por estrellas (mejor valorados).
 - **Más suscripciones**: ordenados por número de suscriptores.
+- **Más recientes**: los mods publicados hace menos tiempo.
 - **Paginación**: navega con los botones de página (primera, última y las
   cercanas a la actual) en lugar de cargar la lista de golpe.
 
@@ -41,6 +42,20 @@ página en Steam. También se guardan los últimos juegos visitados.
 No hace falta ninguna clave de API: la app lee los datos públicos que Steam
 publica en la propia web del Workshop. Los resultados se cachean unos minutos
 para no pedir la misma página dos veces.
+
+## Historial de descargas
+
+La pestaña **Historial** guarda cada mod que hayas descargado y lo agrupa por
+juego. Cada grupo muestra el nombre del juego, cuántos mods has bajado y la
+última descarga; dentro de cada grupo puedes abrir la carpeta del mod o su
+página en Steam.
+
+- El historial se guarda en `config.json`, así que sigue ahí al cerrar la app.
+- Si vuelves a descargar el mismo mod en la misma carpeta, se actualiza su
+  entrada en lugar de duplicarla.
+- Las descargas antiguas (las que solo guardaban título y carpeta) aparecen
+  bajo **Descargas anteriores**, porque Steam no guardaba entonces el juego.
+- **Vaciar historial** borra el registro, pero no los archivos descargados.
 
 ## Iniciar sesión con Steam (opcional)
 
@@ -70,9 +85,11 @@ Si no tienes la app móvil de Steam, los mods de juegos de pago no se pueden baj
   También extrae solo los archivos reales del mod (`.bin` de contenido antiguo).
 - Permite iniciar sesión escaneando un QR con la app oficial de Steam y reutiliza
   ese token en las siguientes descargas.
-- Navega por el Workshop de cualquier juego (populares, más suscritos, búsqueda
-  por nombre o ID y paginación) leyendo los datos públicos de la web de Steam,
-  sin clave de API.
+- Navega por el Workshop de cualquier juego (populares, más suscritos, más
+  recientes, búsqueda por nombre o ID y paginación) leyendo los datos públicos
+  de la web de Steam, sin clave de API.
+- Guarda en `config.json` un historial de descargas con el juego, el mod, la
+  miniatura, la carpeta y la fecha; la interfaz lo agrupa por juego.
 
 ## Notas
 
@@ -89,6 +106,6 @@ Si no tienes la app móvil de Steam, los mods de juegos de pago no se pueden baj
 | `app.py` | Servidor, descargas, login con QR y explorador del Workshop |
 | `static/index.html` | Interfaz |
 | `iniciar.bat` | Lanzador para Windows |
-| `config.json` | Carpeta de destino y preferencias (local, no se versiona) |
+| `config.json` | Carpeta de destino, preferencias e historial de descargas (local, no se versiona) |
 | `vendor/depotdownloader/` | DepotDownloader (se descarga solo) |
 | `tests/` | Tests básicos (`python -m unittest discover -s tests`) |

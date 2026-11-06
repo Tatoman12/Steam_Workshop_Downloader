@@ -11,6 +11,7 @@ import tempfile
 import unittest
 import zlib
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -133,6 +134,128 @@ class WorkshopParsingTests(unittest.TestCase):
         self.assertEqual(item["size_text"], "2.0 KB")
         self.assertEqual(item["tags"], ["Lua", "Items"])
         self.assertEqual(item["stars"], 4)
+
+
+class BrowseSortTests(unittest.TestCase):
+    def test_recent_sort(self):
+        self.assertEqual(app.BROWSE_SORTS["recent"], "mostrecent")
+        self.assertEqual(app._sort_name("mostrecent"), "recent")
+        self.assertEqual(app._empty_browse("250900", "mostrecent", 1)["sort"], "recent")
+
+    def test_unknown_sort_falls_back_to_popular(self):
+        self.assertEqual(app._sort_name("desconocido"), "popular")
+
+
+class HistoryTests(unittest.TestCase):
+    def test_legacy_history_migrates_recent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "recent": [
+                            {
+                                "title": "Mod antiguo",
+                                "folder": "C:\\mods\\Mod antiguo",
+                                "when": 10,
+                            }
+                        ]
+                    }
+                ),
+                "utf-8",
+            )
+            old_path = app.CONFIG_PATH
+            app.CONFIG_PATH = path
+            try:
+                cfg = app.load_config()
+            finally:
+                app.CONFIG_PATH = old_path
+
+        self.assertEqual(cfg["history"][0]["title"], "Mod antiguo")
+        self.assertEqual(cfg["history"][0]["game"], "Descargas anteriores")
+        self.assertTrue(cfg["history"][0]["legacy"])
+
+    def test_explicit_empty_history_does_not_rebuild_legacy(self):
+        cfg = {
+            "history": [],
+            "recent": [{"title": "Viejo", "folder": "C:\\mods\\Viejo", "when": 10}],
+        }
+        self.assertEqual(app.load_history(cfg), [])
+
+    def test_history_groups_by_game_and_sorts_by_latest(self):
+        entries = [
+            {
+                "fileid": "1",
+                "appid": "250900",
+                "game": "The Binding of Isaac",
+                "title": "Primero",
+                "folder": "C:\\mods\\Primero",
+                "when": 100,
+            },
+            {
+                "fileid": "2",
+                "appid": "250900",
+                "game": "The Binding of Isaac",
+                "title": "Segundo",
+                "folder": "C:\\mods\\Segundo",
+                "when": 300,
+            },
+            {
+                "fileid": "",
+                "appid": "",
+                "game": "Descargas anteriores",
+                "title": "Antiguo",
+                "folder": "C:\\mods\\Antiguo",
+                "when": 200,
+                "legacy": True,
+            },
+        ]
+        groups = app.history_groups(entries)
+        self.assertEqual([g["game"] for g in groups], ["The Binding of Isaac", "Descargas anteriores"])
+        self.assertEqual(groups[0]["count"], 2)
+        self.assertEqual(groups[0]["items"][0]["title"], "Segundo")
+        self.assertEqual(groups[1]["count"], 1)
+
+    def test_record_history_uses_game_name_and_updates_duplicates(self):
+        cfg = {"history": [], "recent": []}
+        job = app.Job(["10", "11"], "C:\\mods", "title")
+        job.items = [
+            {
+                "fileid": "10",
+                "appid": 250900,
+                "title": "Mod A",
+                "size": 2048,
+                "size_text": "2.0 KB",
+                "thumb": "https://example.com/a.jpg",
+            },
+            {
+                "fileid": "11",
+                "appid": 250900,
+                "title": "Mod B",
+                "size": 0,
+                "size_text": "—",
+                "thumb": "",
+            },
+        ]
+        job.folders = ["C:\\mods\\Mod A", "C:\\mods\\Mod B"]
+
+        with mock.patch.object(app, "fetch_app_name", return_value="Juego de prueba") as fetch:
+            app.record_history(job, cfg)
+
+        self.assertEqual(len(cfg["history"]), 2)
+        self.assertEqual(fetch.call_count, 1)
+        groups = app.history_groups(cfg["history"])
+        self.assertEqual(groups[0]["game"], "Juego de prueba")
+        self.assertEqual(groups[0]["count"], 2)
+
+        repeat = app.Job(["10"], "C:\\mods", "title")
+        repeat.items = [dict(job.items[0])]
+        repeat.folders = ["C:\\mods\\Mod A"]
+        with mock.patch.object(app, "fetch_app_name", return_value="Juego de prueba"):
+            app.record_history(repeat, cfg)
+
+        self.assertEqual(len(cfg["history"]), 2)
+        self.assertEqual(len([e for e in cfg["history"] if e["fileid"] == "10"]), 1)
 
 
 class LoginTokenTests(unittest.TestCase):

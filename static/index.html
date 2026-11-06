@@ -3412,6 +3412,250 @@ footer {
   }
 }
 
+/* ------------------------- Historial ------------------------- */
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.history-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 2px;
+}
+.history-toolbar .col-head {
+  flex: 1;
+  min-width: 0;
+}
+.history-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.history-summary {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.history-tools .btn {
+  padding: 7px 10px;
+  font-size: 10px;
+  box-shadow: none;
+}
+.history-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.history-group {
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-top: 3px solid var(--cyan);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--paper-shadow);
+}
+.history-group:nth-child(even) { border-top-color: var(--accent); }
+.history-group-head {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 16px 18px;
+  border-bottom: 1px dashed var(--line-2);
+  background: linear-gradient(135deg, var(--glow-2), transparent 58%);
+}
+.history-group:nth-child(even) .history-group-head {
+  background: linear-gradient(135deg, var(--glow-1), transparent 58%);
+}
+.history-game-mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-xs);
+  background: var(--bg-2);
+  box-shadow: 3px 3px 0 var(--line);
+  color: var(--accent);
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.history-group:nth-child(even) .history-game-mark { color: var(--cyan); }
+.history-game-text {
+  flex: 1;
+  min-width: 0;
+}
+.history-game-text h2 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--display);
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history-game-text p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.history-group-head .btn {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  font-size: 10px;
+  box-shadow: none;
+}
+.history-list { display: flex; flex-direction: column; }
+.history-item {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 18px;
+  border-top: 1px solid var(--line);
+  transition: background-color 0.18s var(--ease);
+}
+.history-item:first-child { border-top: 0; }
+.history-item:hover { background: var(--panel-2); }
+.history-thumb {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-xs);
+  background:
+    linear-gradient(135deg, var(--glow-1), transparent 62%),
+    repeating-linear-gradient(45deg, transparent 0 8px, var(--line) 8px 9px),
+    var(--panel-3);
+}
+.history-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.history-info { min-width: 0; }
+.history-title {
+  margin: 0 0 5px;
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.history-meta .badge {
+  padding: 2px 5px;
+  font-size: 8px;
+}
+.history-folder {
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: var(--muted-2);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.history-actions .btn {
+  padding: 7px 9px;
+  font-size: 10px;
+  box-shadow: none;
+}
+.history-actions .btn.steam {
+  width: 30px;
+  padding: 0;
+  border-color: var(--line-2);
+  background: transparent;
+  color: var(--text-2);
+  font-size: 14px;
+}
+.history-actions .btn.steam:hover:not(:disabled) {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: none;
+}
+.history-actions .btn:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+.history .explore-empty { margin: 0; }
+
+@media (max-width: 720px) {
+  .history-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .history-tools { justify-content: space-between; }
+  .history-group-head {
+    flex-wrap: wrap;
+    padding: 14px;
+  }
+  .history-group-head .btn { margin-left: auto; }
+  .history-game-text h2 { white-space: normal; }
+  .history-item {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px 14px;
+  }
+  .history-thumb {
+    width: 48px;
+    height: 48px;
+  }
+  .history-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+  .history-title { font-size: 16px; }
+}
+
+@media (max-width: 520px) {
+  .history-group-head { align-items: flex-start; }
+  .history-game-mark {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+    font-size: 18px;
+  }
+  .history-group-head .btn {
+    margin-left: 0;
+    width: 100%;
+  }
+  .history-actions .btn:first-child { flex: 1; }
+}
+
 </style>
 </head>
 <body>
@@ -3450,6 +3694,15 @@ footer {
         </svg>
         <span>Explorar</span>
         <span class="side-kbd">02</span>
+      </button>
+      <button id="tabHistory" class="view-tab side-link" data-view="history" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 12a9 9 0 1 0 3-6.7"/>
+          <path d="M3 3v6h6"/>
+          <path d="M12 7v5l3 2"/>
+        </svg>
+        <span>Historial</span>
+        <span class="side-kbd">03</span>
       </button>
     </nav>
 
@@ -3611,17 +3864,36 @@ footer {
         <div id="sortTabs" class="sort-tabs hidden">
           <button class="sort-tab active" data-sort="popular" type="button">★ Más populares</button>
           <button class="sort-tab" data-sort="subs" type="button">↓ Más suscripciones</button>
+          <button class="sort-tab" data-sort="recent" type="button">◷ Más recientes</button>
         </div>
       </div>
       <div class="explore-hints">
         <p id="searchNote" class="hint hidden"></p>
-        <p id="sortHint" class="hint hidden">Más populares = mejor valorados por estrellas · Más suscripciones = más instalados.</p>
+        <p id="sortHint" class="hint hidden">Más populares = mejor valorados por estrellas · Más suscripciones = más instalados · Más recientes = publicados hace menos.</p>
       </div>
 
       <div id="modGrid" class="mod-grid"></div>
       <div id="exploreEmpty" class="explore-empty">Busca un juego para ver sus mods del Workshop.</div>
       <nav id="pager" class="pager hidden" aria-label="Paginación de mods"></nav>
       <div id="exploreError" class="alert hidden"></div>
+    </section>
+
+    <section class="history hidden" id="viewHistory">
+      <div class="history-toolbar">
+        <div class="col-head">
+          <span class="step">01</span>
+          <span class="col-title">Mods descargados</span>
+        </div>
+        <div class="history-tools">
+          <span id="historySummary" class="history-summary"></span>
+          <button id="btnClearHistory" class="btn ghost small hidden" type="button">Vaciar historial</button>
+        </div>
+      </div>
+      <div id="historyGroups" class="history-groups"></div>
+      <div id="historyEmpty" class="explore-empty hidden">
+        Aún no hay descargas registradas. Cuando descargues un mod, aparecerá aquí agrupado por juego.
+      </div>
+      <div id="historyError" class="alert hidden"></div>
     </section>
 
     <footer>
@@ -3639,7 +3911,7 @@ footer {
     retryAfterLogin: false, cfg: null, steam: null, timer: null, loginTimer: null,
     game: null, gameSort: "popular", modPage: 1, modPages: 1, modTotal: 0,
     modLoading: false, modReq: 0, modQuery: "", modIdSearch: false,
-    gameTimer: null, modTimer: null, lastFolder: "",
+    gameTimer: null, modTimer: null, lastFolder: "", historyReq: 0,
   };
 
   const urlInput = $("url");
@@ -3679,8 +3951,15 @@ footer {
   /* Explorador */
   const tabDownload = $("tabDownload");
   const tabExplore = $("tabExplore");
+  const tabHistory = $("tabHistory");
   const viewDownload = $("viewDownload");
   const viewExplore = $("viewExplore");
+  const viewHistory = $("viewHistory");
+  const historyGroups = $("historyGroups");
+  const historyEmpty = $("historyEmpty");
+  const historyError = $("historyError");
+  const historySummary = $("historySummary");
+  const btnClearHistory = $("btnClearHistory");
   const gameQuery = $("gameQuery");
   const gameResults = $("gameResults");
   const recentGamesEl = $("recentGames");
@@ -3898,26 +4177,192 @@ footer {
     }
   };
 
-  function switchView(view) {
-    const explore = view === "explore";
-    viewDownload.classList.toggle("hidden", explore);
-    viewExplore.classList.toggle("hidden", !explore);
-    tabDownload.classList.toggle("active", !explore);
-    tabExplore.classList.toggle("active", explore);
-    tabDownload.setAttribute("aria-selected", String(!explore));
-    tabExplore.setAttribute("aria-selected", String(explore));
+  const VIEW_META = {
+    download: {
+      eyebrow: "Descarga directa",
+      title: "Descargar mod",
+      subtitle: "Pega un enlace del Workshop y elige la carpeta de destino.",
+    },
+    explore: {
+      eyebrow: "Explorador",
+      title: "Explorar Workshop",
+      subtitle: "Busca un juego, filtra mods y descarga lo que te interese.",
+    },
+    history: {
+      eyebrow: "Registro local",
+      title: "Historial",
+      subtitle: "Tus mods descargados, guardados y agrupados por juego.",
+    },
+  };
 
+  function switchView(view) {
+    const target = VIEW_META[view] ? view : "download";
+    const isDownload = target === "download";
+    const isExplore = target === "explore";
+    const isHistory = target === "history";
+    viewDownload.classList.toggle("hidden", !isDownload);
+    viewExplore.classList.toggle("hidden", !isExplore);
+    viewHistory.classList.toggle("hidden", !isHistory);
+    tabDownload.classList.toggle("active", isDownload);
+    tabExplore.classList.toggle("active", isExplore);
+    tabHistory.classList.toggle("active", isHistory);
+    tabDownload.setAttribute("aria-selected", String(isDownload));
+    tabExplore.setAttribute("aria-selected", String(isExplore));
+    tabHistory.setAttribute("aria-selected", String(isHistory));
+
+    const meta = VIEW_META[target];
     const eyebrow = $("viewEyebrow");
     const title = $("viewTitle");
     const subtitle = $("viewSubtitle");
-    if (eyebrow) eyebrow.textContent = explore ? "Explorador" : "Descarga directa";
-    if (title) title.textContent = explore ? "Explorar Workshop" : "Descargar mod";
-    if (subtitle) {
-      subtitle.textContent = explore
-        ? "Busca un juego, filtra mods y descarga lo que te interese."
-        : "Pega un enlace del Workshop y elige la carpeta de destino.";
-    }
+    if (eyebrow) eyebrow.textContent = meta.eyebrow;
+    if (title) title.textContent = meta.title;
+    if (subtitle) subtitle.textContent = meta.subtitle;
+    if (isHistory) loadHistory();
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function fmtWhen(when) {
+    const seconds = Number(when) || 0;
+    if (!seconds) return "Fecha desconocida";
+    const date = new Date(seconds * 1000);
+    const diff = (Date.now() - date.getTime()) / 1000;
+    if (diff >= 0 && diff < 60) return "Ahora mismo";
+    if (diff >= 0 && diff < 3600) return `Hace ${Math.max(1, Math.floor(diff / 60))} min`;
+    if (diff >= 0 && diff < 86400) return `Hace ${Math.max(1, Math.floor(diff / 3600))} h`;
+    if (diff >= 0 && diff < 7 * 86400) return `Hace ${Math.max(1, Math.floor(diff / 86400))} d`;
+    try {
+      return new Intl.DateTimeFormat("es-ES", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(date);
+    } catch {
+      return date.toLocaleDateString();
+    }
+  }
+
+  function showHistoryError(msg) {
+    historyError.textContent = msg || "";
+    historyError.classList.toggle("hidden", !msg);
+  }
+
+  function historyGroupCard(group) {
+    const items = Array.isArray(group.items) ? group.items : [];
+    const game = group.game || "Juego sin identificar";
+    const mark = (game.trim().charAt(0) || "?").toUpperCase();
+    const countText = `${group.count} mod${group.count === 1 ? "" : "s"}`;
+    const latest = fmtWhen(group.latest);
+    const meta = group.legacy
+      ? `${countText} · sin juego identificado · última descarga ${latest}`
+      : `App ${esc(group.appid)} · ${countText} · última descarga ${latest}`;
+    const gameLink = group.appid
+      ? `<a class="btn ghost small" href="https://steamcommunity.com/app/${encodeURIComponent(group.appid)}/workshop/" target="_blank" rel="noopener">Ver juego</a>`
+      : "";
+
+    const rows = items.map((item) => {
+      const fileid = String(item.fileid || "");
+      const folder = String(item.folder || "");
+      const size = item.size_text && item.size_text !== "—"
+        ? `<span class="badge">${esc(item.size_text)}</span>`
+        : "";
+      const open = folder
+        ? `<button class="btn ghost small" type="button" data-folder="${esc(folder)}">Abrir carpeta</button>`
+        : "";
+      const steam = fileid
+        ? `<a class="btn ghost steam" href="https://steamcommunity.com/sharedfiles/filedetails/?id=${encodeURIComponent(fileid)}"
+             target="_blank" rel="noopener" title="Abrir en Steam">↗</a>`
+        : "";
+      return `
+        <article class="history-item">
+          <div class="history-thumb">
+            ${item.thumb ? `<img src="${esc(item.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
+          </div>
+          <div class="history-info">
+            <p class="history-title" title="${esc(item.title)}">${esc(item.title)}</p>
+            <div class="history-meta">
+              <span class="badge">${esc(fmtWhen(item.when))}</span>
+              ${size}
+              ${item.legacy ? `<span class="badge">Anterior</span>` : ""}
+            </div>
+            ${folder ? `<p class="history-folder" title="${esc(folder)}">${esc(folder)}</p>` : ""}
+          </div>
+          <div class="history-actions">${open}${steam}</div>
+        </article>`;
+    }).join("");
+
+    const card = document.createElement("article");
+    card.className = "history-group";
+    card.innerHTML = `
+      <header class="history-group-head">
+        <div class="history-game-mark" aria-hidden="true">${esc(mark)}</div>
+        <div class="history-game-text">
+          <h2>${esc(game)}</h2>
+          <p>${meta}</p>
+        </div>
+        ${gameLink}
+      </header>
+      <div class="history-list">${rows}</div>`;
+
+    card.querySelectorAll("button[data-folder]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const path = button.dataset.folder || "";
+        if (!path) return;
+        button.disabled = true;
+        showHistoryError("");
+        try {
+          const r = await fetch("/api/open", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path }),
+          });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(data.detail || "No pude abrir la carpeta.");
+        } catch (e) {
+          showHistoryError(e.message);
+        } finally {
+          button.disabled = false;
+        }
+      });
+    });
+    return card;
+  }
+
+  function renderHistory(data) {
+    const groups = Array.isArray(data.groups) ? data.groups : [];
+    const count = Number(data.count) || 0;
+    historyGroups.innerHTML = "";
+    historySummary.textContent = count
+      ? `${count} mod${count === 1 ? "" : "s"} · ${groups.length} grupo${groups.length === 1 ? "" : "s"}`
+      : "";
+    btnClearHistory.classList.toggle("hidden", !count);
+    if (!groups.length) {
+      historyEmpty.classList.remove("hidden");
+      return;
+    }
+    historyEmpty.classList.add("hidden");
+    const frag = document.createDocumentFragment();
+    groups.forEach((group) => frag.appendChild(historyGroupCard(group)));
+    historyGroups.appendChild(frag);
+  }
+
+  async function loadHistory() {
+    const req = ++state.historyReq;
+    showHistoryError("");
+    historyEmpty.classList.add("hidden");
+    historyGroups.innerHTML = `<div class="explore-empty">Cargando historial…</div>`;
+    try {
+      const r = await fetch("/api/history", { cache: "no-store" });
+      const data = await r.json();
+      if (req !== state.historyReq) return;
+      if (!r.ok) throw new Error(data.detail || "No pude leer el historial.");
+      renderHistory(data);
+    } catch (e) {
+      if (req !== state.historyReq) return;
+      historyGroups.innerHTML = "";
+      historySummary.textContent = "";
+      btnClearHistory.classList.add("hidden");
+      showHistoryError(e.message);
+    }
   }
 
   function loadRecentGames() {
@@ -4381,6 +4826,7 @@ footer {
         progressActions.classList.add("hidden");
         doneActions.classList.remove("hidden");
         showError("");
+        if (!viewHistory.classList.contains("hidden")) loadHistory();
         return;
       }
       if (job.status === "error" || job.status === "cancelled") {
@@ -4605,6 +5051,23 @@ footer {
   /* --------------------------- Explorador: eventos --------------------------- */
   tabDownload.addEventListener("click", () => switchView("download"));
   tabExplore.addEventListener("click", () => switchView("explore"));
+  tabHistory.addEventListener("click", () => switchView("history"));
+
+  btnClearHistory.addEventListener("click", async () => {
+    if (!confirm("¿Vaciar todo el historial de descargas? Los archivos no se borran.")) return;
+    btnClearHistory.disabled = true;
+    showHistoryError("");
+    try {
+      const r = await fetch("/api/history/clear", { method: "POST" });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.detail || "No pude vaciar el historial.");
+      await loadHistory();
+    } catch (e) {
+      showHistoryError(e.message);
+    } finally {
+      btnClearHistory.disabled = false;
+    }
+  });
 
   gameQuery.addEventListener("input", () => {
     clearTimeout(state.gameTimer);

@@ -58,19 +58,27 @@ LOGIN_PUBFILE = "155101824"
 
 API_DETAILS = "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/"
 API_COLLECTION = "https://api.steampowered.com/ISteamRemoteStorage/GetCollectionDetails/v1/"
+API_STORE_APPDETAILS = "https://store.steampowered.com/api/appdetails"
 
 DEFAULT_PORT = 8756
 MAX_COLLECTION_ITEMS = 200
+MAX_HISTORY = 400
 
 # Explorador del Workshop. La web pública de Steam incrusta los datos de cada
 # página en el HTML, así que se puede navegar sin clave de la Web API.
 COMMUNITY_BASE = "https://steamcommunity.com"
 SEARCH_APPS_URL = COMMUNITY_BASE + "/actions/SearchApps/"
 BROWSE_URL = COMMUNITY_BASE + "/workshop/browse/"
-BROWSE_SORTS = {"popular": "toprated", "subs": "totaluniquesubscribers"}
+BROWSE_SORTS = {
+    "popular": "toprated",
+    "subs": "totaluniquesubscribers",
+    "recent": "mostrecent",
+}
 MAX_BROWSE_PAGE = 50
 BROWSE_TTL = 300
 SEARCH_TTL = 900
+APP_NAME_TTL = 24 * 3600
+APP_NAME_FAIL_TTL = 300
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
@@ -94,7 +102,106 @@ DEFAULT_CONFIG = {
     "dest": "",
     "naming": "title",
     "recent": [],
+    "history": [],
 }
+
+
+def _legacy_history(recent) -> list[dict]:
+    """Convierte el antiguo historial de 10 descargas en entradas de historial.
+
+    Aquellas descargas no guardaban el appid, así que se agrupan aparte como
+    «Descargas anteriores» para no perderlas.
+    """
+    out = []
+    if not isinstance(recent, list):
+        return out
+    for entry in recent:
+        if not isinstance(entry, dict):
+            continue
+        title = str(entry.get("title") or "").strip()
+        folder = str(entry.get("folder") or "").strip()
+        if not title and not folder:
+            continue
+        out.append(
+            {
+                "fileid": "",
+                "appid": "",
+                "game": "Descargas anteriores",
+                "title": title or "Mod",
+                "thumb": "",
+                "folder": folder,
+                "when": _int(entry.get("when")),
+                "size": 0,
+                "size_text": "",
+                "legacy": True,
+            }
+        )
+    out.sort(key=lambda item: -_int(item.get("when")))
+    return out
+
+
+def _clean_history(raw) -> list[dict]:
+    """Normaliza el historial guardado y descarta entradas vacías."""
+    out = []
+    if not isinstance(raw, list):
+        return out
+    for entry in raw:
+        if not isinstance(entry, dict):
+            continue
+        fileid = str(entry.get("fileid") or "").strip()
+        title = str(entry.get("title") or "").strip()
+        folder = str(entry.get("folder") or "").strip()
+        if not title and not folder:
+            continue
+        size = _int(entry.get("size"))
+        appid = str(entry.get("appid") or "").strip()
+        game = str(entry.get("game") or "").strip()
+        if not game and appid:
+            game = f"Juego {appid}"
+        out.append(
+            {
+                "fileid": fileid,
+                "appid": appid,
+                "game": game or "Descargas anteriores",
+                "title": title or (f"Workshop {fileid}" if fileid else "Mod"),
+                "thumb": str(entry.get("thumb") or "").strip(),
+                "folder": folder,
+                "when": _int(entry.get("when")),
+                "size": size,
+                "size_text": str(entry.get("size_text") or (human_size(size) if size else "")),
+                "legacy": bool(entry.get("legacy")) or not bool(appid),
+            }
+        )
+    out.sort(key=lambda item: -_int(item.get("when")))
+    return out
+
+
+def load_history(cfg: dict | None = None) -> list[dict]:
+    cfg = cfg if cfg is not None else load_config()
+    return _clean_history(cfg.get("history") or [])
+
+
+def history_groups(entries) -> list[dict]:
+    """Agrupa las entradas por appid (o por nombre si no hay appid)."""
+    groups: dict[str, dict] = {}
+    for entry in _clean_history(entries):
+        appid = entry["appid"]
+        key = appid or (f"name:{entry['game'].lower()}" if entry["game"] else "legacy")
+        group = groups.get(key)
+        if group is None:
+            group = {
+                "appid": appid,
+                "game": entry["game"] or (f"Juego {appid}" if appid else "Descargas anteriores"),
+                "legacy": entry["legacy"],
+                "items": [],
+                "count": 0,
+                "latest": 0,
+            }
+            groups[key] = group
+        group["items"].append(entry)
+        group["count"] += 1
+        group["latest"] = max(group["latest"], _int(entry.get("when")))
+    return sorted(groups.values(), key=lambda group: (-_int(group.get("latest")), group["game"].lower()))
 
 
 def load_config() -> dict:
@@ -106,6 +213,8 @@ def load_config() -> dict:
     cfg = dict(DEFAULT_CONFIG)
     if isinstance(raw, dict):
         cfg.update({k: v for k, v in raw.items() if k in DEFAULT_CONFIG})
+        if "history" not in raw:
+            cfg["history"] = _legacy_history(raw.get("recent") or [])
     return cfg
 
 
@@ -273,6 +382,35 @@ def fetch_details(ids: list[str]) -> list[dict]:
     return out
 
 
+def fetch_app_name(appid: str) -> str:
+    """Nombre del juego para el historial; si falla, se usa un fallback."""
+    appid = str(appid or "").strip()
+    if not appid.isdigit():
+        return ""
+    cache_key = f"appname:{appid}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return str(cached)
+
+    name = ""
+    try:
+        r = requests.get(
+            API_STORE_APPDETAILS,
+            params={"appids": appid, "l": "spanish", "cc": "ES"},
+            headers={"User-Agent": USER_AGENT, "Accept-Language": "es-ES,es;q=0.9,en;q=0.8"},
+            timeout=10,
+        )
+        r.raise_for_status()
+        payload = r.json()
+        node = payload.get(appid) if isinstance(payload, dict) else None
+        data = (node or {}).get("data") or {}
+        name = str(data.get("name") or "").strip()
+    except Exception:
+        name = ""
+    _cache_set(cache_key, name, APP_NAME_TTL if name else APP_NAME_FAIL_TTL)
+    return name
+
+
 def fetch_collection(cid: str) -> list[str]:
     try:
         r = requests.post(
@@ -419,6 +557,13 @@ def search_games(query: str) -> list[dict]:
     return games
 
 
+def _sort_name(sort_key: str) -> str:
+    for name, key in BROWSE_SORTS.items():
+        if key == sort_key:
+            return name
+    return "popular"
+
+
 def _empty_browse(appid: str, sort_key: str, page: int, app_name: str = "") -> dict:
     return {
         "appid": appid,
@@ -427,7 +572,7 @@ def _empty_browse(appid: str, sort_key: str, page: int, app_name: str = "") -> d
             "name": app_name,
             "workshop_url": f"{COMMUNITY_BASE}/app/{appid}/workshop/",
         },
-        "sort": "subs" if sort_key == BROWSE_SORTS["subs"] else "popular",
+        "sort": _sort_name(sort_key),
         "page": 1,
         "pages": 1,
         "total": 0,
@@ -495,7 +640,7 @@ def fetch_browse(appid: str, sort: str, page: int = 1, query: str = "") -> dict:
             "name": (app or {}).get("name") or "",
             "workshop_url": f"{COMMUNITY_BASE}/app/{appid}/workshop/",
         },
-        "sort": "subs" if sort_key == BROWSE_SORTS["subs"] else "popular",
+        "sort": _sort_name(sort_key),
         "page": _int(listing.get("current_page"), page),
         "pages": _int(listing.get("total_pages"), 1),
         "total": _int(listing.get("total_count"), len(items)),
@@ -1088,6 +1233,7 @@ def _run_download(job: Job, cfg: dict) -> None:
             "title": d["title"],
             "size": d["size"],
             "size_text": human_size(d["size"]) if d["size"] else "—",
+            "thumb": d.get("thumb") or "",
         }
         for d in details
     ]
@@ -1107,6 +1253,68 @@ def _run_download(job: Job, cfg: dict) -> None:
         download_item(job, item, cfg, 24.0 + span * index, span)
 
     job.set(percent=99.0, message="Terminando…")
+
+
+def _same_history_entry(first: dict, second: dict) -> bool:
+    same_folder = str(first.get("folder") or "").lower() == str(second.get("folder") or "").lower()
+    if not same_folder:
+        return False
+    first_id = str(first.get("fileid") or "")
+    second_id = str(second.get("fileid") or "")
+    if first_id and second_id:
+        return first_id == second_id
+    return str(first.get("title") or "").lower() == str(second.get("title") or "").lower()
+
+
+def record_history(job: Job, cfg: dict | None = None) -> None:
+    """Guarda cada mod descargado, agrupable después por juego."""
+    should_save = cfg is None
+    cfg = cfg if cfg is not None else load_config()
+    history = load_history(cfg)
+    known_games = {
+        str(entry.get("appid")): str(entry.get("game"))
+        for entry in history
+        if entry.get("appid")
+        and entry.get("game")
+        and not re.fullmatch(r"Juego \d+", str(entry.get("game")))
+    }
+    app_names: dict[str, str] = {}
+    now = int(time.time())
+    new_entries = []
+
+    for index, item in enumerate(job.items):
+        fileid = str(item.get("fileid") or "").strip()
+        appid = str(item.get("appid") or "").strip()
+        title = str(item.get("title") or "").strip() or f"Workshop {fileid}"
+        folder = job.folders[index] if index < len(job.folders) else ""
+        if appid:
+            if appid not in app_names:
+                app_names[appid] = known_games.get(appid) or fetch_app_name(appid) or f"Juego {appid}"
+            game = app_names[appid]
+        else:
+            game = "Descargas anteriores"
+        size = _int(item.get("size"))
+        entry = {
+            "fileid": fileid,
+            "appid": appid,
+            "game": game,
+            "title": title,
+            "thumb": str(item.get("thumb") or ""),
+            "folder": folder,
+            "when": now,
+            "size": size,
+            "size_text": str(item.get("size_text") or (human_size(size) if size else "")),
+            "legacy": not bool(appid),
+        }
+        history = [old for old in history if not _same_history_entry(old, entry)]
+        new_entries = [old for old in new_entries if not _same_history_entry(old, entry)]
+        new_entries.append(entry)
+
+    history = new_entries + history
+    history.sort(key=lambda entry: -_int(entry.get("when")))
+    cfg["history"] = history[:MAX_HISTORY]
+    if should_save:
+        save_config(cfg)
 
 
 def run_download_job(job: Job, cfg: dict) -> None:
@@ -1142,6 +1350,7 @@ def run_download_job(job: Job, cfg: dict) -> None:
                     },
                 )
                 cfg["recent"] = recent[:10]
+                record_history(job, cfg)
                 save_config(cfg)
 
 
@@ -1294,6 +1503,25 @@ def get_config():
         "suggestions": unique,
         "steam": _steam_state(),
     }
+
+
+@app.get("/api/history")
+def get_history():
+    cfg = load_config()
+    entries = load_history(cfg)
+    groups = history_groups(entries)
+    return {
+        "count": len(entries),
+        "groups": groups,
+    }
+
+
+@app.post("/api/history/clear")
+def clear_history():
+    cfg = load_config()
+    cfg["history"] = []
+    save_config(cfg)
+    return {"ok": True}
 
 
 @app.get("/api/games/search")
